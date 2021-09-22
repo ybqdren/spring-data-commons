@@ -21,6 +21,7 @@
 		<javaslang>2.0.6</javaslang>
 		<vavr>0.10.4</vavr>
 		<scala>2.11.7</scala>
+		<spring>6.0.0-SNAPSHOT</spring>
 		<xmlbeam>1.4.20</xmlbeam>
 
 		<java-module-name>spring.data.commons</java-module-name>
