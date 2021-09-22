@@ -18,7 +18,7 @@ package org.springframework.data.repository.cdi;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 
-import javax.enterprise.inject.Stereotype;
+import jakarta.enterprise.inject.Stereotype;
 
 @Stereotype
 @Retention(RetentionPolicy.RUNTIME)

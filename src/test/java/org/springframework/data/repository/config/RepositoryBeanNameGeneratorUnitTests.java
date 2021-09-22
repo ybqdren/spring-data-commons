@@ -19,7 +19,7 @@ import static org.assertj.core.api.Assertions.*;
 
 import java.io.IOException;
 
-import javax.inject.Named;
+import jakarta.inject.Named;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;

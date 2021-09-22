@@ -17,7 +17,7 @@ package org.springframework.data.domain.jaxb;
 
 import java.util.Collections;
 
-import javax.xml.bind.annotation.adapters.XmlAdapter;
+import jakarta.xml.bind.annotation.adapters.XmlAdapter;
 
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;

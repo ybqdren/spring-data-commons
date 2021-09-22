@@ -115,7 +115,7 @@ class TransactionRepositoryProxyPostProcessorUnitTests {
 
 		Sample save(Sample object);
 
-		@javax.transaction.Transactional
+		@jakarta.transaction.Transactional
 		void methodWithJtaOneDotTwoAtTransactional();
 	}
 
