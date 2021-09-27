@@ -42,11 +42,6 @@ import org.springframework.util.ClassUtils;
  * @author Gerrit Meier
  * @since 2.0
  * @see org.reactivestreams.Publisher
- * @see io.reactivex.Single
- * @see io.reactivex.Maybe
- * @see io.reactivex.Observable
- * @see io.reactivex.Completable
- * @see io.reactivex.Flowable
  * @see io.reactivex.rxjava3.core.Single
  * @see io.reactivex.rxjava3.core.Maybe
  * @see io.reactivex.rxjava3.core.Observable
@@ -58,9 +53,6 @@ import org.springframework.util.ClassUtils;
 public abstract class ReactiveWrappers {
 
 	private static final boolean PROJECT_REACTOR_PRESENT = ClassUtils.isPresent("reactor.core.publisher.Flux",
-			ReactiveWrappers.class.getClassLoader());
-
-	private static final boolean RXJAVA2_PRESENT = ClassUtils.isPresent("io.reactivex.Flowable",
 			ReactiveWrappers.class.getClassLoader());
 
 	private static final boolean RXJAVA3_PRESENT = ClassUtils.isPresent("io.reactivex.rxjava3.core.Flowable",
@@ -78,9 +70,7 @@ public abstract class ReactiveWrappers {
 	 */
 	public enum ReactiveLibrary {
 
-		PROJECT_REACTOR,
-
-		RXJAVA2, RXJAVA3, KOTLIN_COROUTINES;
+		PROJECT_REACTOR, RXJAVA3, KOTLIN_COROUTINES;
 	}
 
 	/**
@@ -106,8 +96,6 @@ public abstract class ReactiveWrappers {
 		switch (reactiveLibrary) {
 			case PROJECT_REACTOR:
 				return PROJECT_REACTOR_PRESENT;
-			case RXJAVA2:
-				return RXJAVA2_PRESENT;
 			case RXJAVA3:
 				return RXJAVA3_PRESENT;
 			case KOTLIN_COROUTINES:
