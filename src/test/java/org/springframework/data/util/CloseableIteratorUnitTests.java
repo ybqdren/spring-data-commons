@@ -19,9 +19,7 @@ import static org.assertj.core.api.Assertions.*;
 
 import java.util.Arrays;
 import java.util.Iterator;
-import java.util.List;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import org.junit.jupiter.api.Test;
 
@@ -35,9 +33,9 @@ class CloseableIteratorUnitTests {
 	@Test // DATACMNS-1637
 	void shouldCreateStream() {
 
-		CloseableIteratorImpl<String> iterator = new CloseableIteratorImpl<>(Arrays.asList("1", "2", "3").iterator());
+		var iterator = new CloseableIteratorImpl<String>(Arrays.asList("1", "2", "3").iterator());
 
-		List<String> collection = iterator.stream().map(it -> "hello " + it).collect(Collectors.toList());
+		var collection = iterator.stream().map(it -> "hello " + it).collect(Collectors.toList());
 
 		assertThat(collection).contains("hello 1", "hello 2", "hello 3");
 		assertThat(iterator.closed).isFalse();
@@ -46,9 +44,9 @@ class CloseableIteratorUnitTests {
 	@Test // DATACMNS-1637
 	void closeStreamShouldCloseIterator() {
 
-		CloseableIteratorImpl<String> iterator = new CloseableIteratorImpl<>(Arrays.asList("1", "2", "3").iterator());
+		var iterator = new CloseableIteratorImpl<String>(Arrays.asList("1", "2", "3").iterator());
 
-		try (Stream<String> stream = iterator.stream()) {
+		try (var stream = iterator.stream()) {
 			assertThat(stream.findFirst()).hasValue("1");
 		}
 
