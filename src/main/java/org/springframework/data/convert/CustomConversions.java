@@ -109,7 +109,7 @@ public class CustomConversions {
 
 		this.converterConfiguration = converterConfiguration;
 
-		List<Object> registeredConverters = collectPotentialConverterRegistrations(
+		var registeredConverters = collectPotentialConverterRegistrations(
 				converterConfiguration.getStoreConversions(), converterConfiguration.getUserConverters()).stream() //
 						.filter(this::isSupportedConverter) //
 						.filter(this::shouldRegister) //
@@ -249,7 +249,7 @@ public class CustomConversions {
 
 		Assert.notNull(converterRegistration, "Converter registration must not be null!");
 
-		ConvertiblePair pair = converterRegistration.getConvertiblePair();
+		var pair = converterRegistration.getConvertiblePair();
 
 		if (converterRegistration.isReading()) {
 
@@ -284,7 +284,7 @@ public class CustomConversions {
 	 */
 	private boolean isSupportedConverter(ConverterRegistrationIntent registrationIntent) {
 
-		boolean register = registrationIntent.isUserConverter() || registrationIntent.isStoreConverter()
+		var register = registrationIntent.isUserConverter() || registrationIntent.isStoreConverter()
 				|| (registrationIntent.isReading() && registrationIntent.isSimpleSourceType())
 				|| (registrationIntent.isWriting() && registrationIntent.isSimpleTargetType());
 
@@ -325,7 +325,7 @@ public class CustomConversions {
 
 		Assert.notNull(sourceType, "Source type must not be null!");
 
-		Class<?> target = customWriteTargetTypes.computeIfAbsent(sourceType, getRawWriteTarget);
+		var target = customWriteTargetTypes.computeIfAbsent(sourceType, getRawWriteTarget);
 
 		return Void.class.equals(target) || target == null ? Optional.empty() : Optional.of(target);
 	}
@@ -344,7 +344,7 @@ public class CustomConversions {
 		Assert.notNull(sourceType, "Source type must not be null!");
 		Assert.notNull(requestedTargetType, "Target type must not be null!");
 
-		Class<?> target = customWriteTargetTypes.computeIfAbsent(sourceType, requestedTargetType, getWriteTarget);
+		var target = customWriteTargetTypes.computeIfAbsent(sourceType, requestedTargetType, getWriteTarget);
 
 		return Void.class.equals(target) || target == null ? Optional.empty() : Optional.of(target);
 	}
@@ -424,13 +424,13 @@ public class CustomConversions {
 			return targetType;
 		}
 
-		for (ConvertiblePair pair : pairs) {
+		for (var pair : pairs) {
 
 			if (!hasAssignableSourceType(pair, sourceType)) {
 				continue;
 			}
 
-			Class<?> candidate = pair.getTargetType();
+			var candidate = pair.getTargetType();
 
 			if (!requestedTargetTypeIsAssignable(targetType, candidate)) {
 				continue;
@@ -487,7 +487,7 @@ public class CustomConversions {
 		public Class<?> computeIfAbsent(Class<?> sourceType, Class<?> targetType,
 				Function<ConvertiblePair, Class<?>> mappingFunction) {
 
-			TargetTypes targetTypes = customReadTargetTypes.get(sourceType);
+			var targetTypes = customReadTargetTypes.get(sourceType);
 
 			if (targetTypes == null) {
 				targetTypes = customReadTargetTypes.computeIfAbsent(sourceType, TargetTypes::new);
@@ -528,7 +528,7 @@ public class CustomConversions {
 		@Nullable
 		public Class<?> computeIfAbsent(Class<?> targetType, Function<ConvertiblePair, Class<?>> mappingFunction) {
 
-			Class<?> optionalTarget = conversionTargets.get(targetType);
+			var optionalTarget = conversionTargets.get(targetType);
 
 			if (optionalTarget == null) {
 				optionalTarget = mappingFunction.apply(new ConvertiblePair(sourceType, targetType));
@@ -754,9 +754,9 @@ public class CustomConversions {
 
 			Assert.notNull(converter, "Converter must not be null!");
 
-			Class<?> type = converter.getClass();
-			boolean isWriting = type.isAnnotationPresent(WritingConverter.class);
-			boolean isReading = type.isAnnotationPresent(ReadingConverter.class);
+			var type = converter.getClass();
+			var isWriting = type.isAnnotationPresent(WritingConverter.class);
+			var isReading = type.isAnnotationPresent(ReadingConverter.class);
 
 			if (converter instanceof ConverterAware) {
 
@@ -765,7 +765,7 @@ public class CustomConversions {
 
 			} else if (converter instanceof GenericConverter) {
 
-				Set<ConvertiblePair> convertibleTypes = GenericConverter.class.cast(converter).getConvertibleTypes();
+				var convertibleTypes = GenericConverter.class.cast(converter).getConvertibleTypes();
 
 				return convertibleTypes == null //
 						? Streamable.empty() //
@@ -787,8 +787,8 @@ public class CustomConversions {
 		private Streamable<ConverterRegistration> getRegistrationFor(Object converter, Class<?> type, boolean isReading,
 				boolean isWriting) {
 
-			Class<? extends Object> converterType = converter.getClass();
-			Class<?>[] arguments = GenericTypeResolver.resolveTypeArguments(converterType, type);
+			var converterType = converter.getClass();
+			var arguments = GenericTypeResolver.resolveTypeArguments(converterType, type);
 
 			if (arguments == null) {
 				throw new IllegalStateException(String.format("Couldn't resolve type arguments for %s!", converterType));
@@ -830,11 +830,10 @@ public class CustomConversions {
 				return true;
 			}
 
-			if (!(o instanceof StoreConversions)) {
+			if (!(o instanceof StoreConversions that)) {
 				return false;
 			}
 
-			StoreConversions that = (StoreConversions) o;
 			if (!ObjectUtils.nullSafeEquals(storeTypeHolder, that.storeTypeHolder)) {
 				return false;
 			}
@@ -848,7 +847,7 @@ public class CustomConversions {
 		 */
 		@Override
 		public int hashCode() {
-			int result = ObjectUtils.nullSafeHashCode(storeTypeHolder);
+			var result = ObjectUtils.nullSafeHashCode(storeTypeHolder);
 			result = 31 * result + ObjectUtils.nullSafeHashCode(storeConverters);
 			return result;
 		}

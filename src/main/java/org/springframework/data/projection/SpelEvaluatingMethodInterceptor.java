@@ -15,7 +15,6 @@
  */
 package org.springframework.data.projection;
 
-import java.lang.reflect.Method;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
@@ -75,7 +74,7 @@ class SpelEvaluatingMethodInterceptor implements MethodInterceptor {
 		Assert.notNull(parser, "SpelExpressionParser must not be null!");
 		Assert.notNull(targetInterface, "Target interface must not be null!");
 
-		StandardEvaluationContext evaluationContext = new StandardEvaluationContext();
+		var evaluationContext = new StandardEvaluationContext();
 
 		if (target instanceof Map) {
 			evaluationContext.addPropertyAccessor(new MapAccessor());
@@ -106,13 +105,13 @@ class SpelEvaluatingMethodInterceptor implements MethodInterceptor {
 
 		Map<Integer, Expression> expressions = new HashMap<>();
 
-		for (Method method : targetInterface.getMethods()) {
+		for (var method : targetInterface.getMethods()) {
 
 			if (!method.isAnnotationPresent(Value.class)) {
 				continue;
 			}
 
-			Value value = method.getAnnotation(Value.class);
+			var value = method.getAnnotation(Value.class);
 
 			if (!StringUtils.hasText(value.value())) {
 				throw new IllegalStateException(String.format("@Value annotation on %s contains empty expression!", method));
@@ -132,7 +131,7 @@ class SpelEvaluatingMethodInterceptor implements MethodInterceptor {
 	@Override
 	public Object invoke(@SuppressWarnings("null") MethodInvocation invocation) throws Throwable {
 
-		Expression expression = expressions.get(invocation.getMethod().hashCode());
+		var expression = expressions.get(invocation.getMethod().hashCode());
 
 		if (expression == null) {
 			return delegate.invoke(invocation);
@@ -179,11 +178,9 @@ class SpelEvaluatingMethodInterceptor implements MethodInterceptor {
 				return true;
 			}
 
-			if (!(o instanceof TargetWrapper)) {
+			if (!(o instanceof TargetWrapper that)) {
 				return false;
 			}
-
-			TargetWrapper that = (TargetWrapper) o;
 
 			if (!ObjectUtils.nullSafeEquals(target, that.target)) {
 				return false;
@@ -198,7 +195,7 @@ class SpelEvaluatingMethodInterceptor implements MethodInterceptor {
 		 */
 		@Override
 		public int hashCode() {
-			int result = ObjectUtils.nullSafeHashCode(target);
+			var result = ObjectUtils.nullSafeHashCode(target);
 			result = 31 * result + ObjectUtils.nullSafeHashCode(args);
 			return result;
 		}

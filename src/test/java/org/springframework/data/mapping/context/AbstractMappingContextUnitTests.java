@@ -30,7 +30,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -39,6 +38,7 @@ import java.util.function.Supplier;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationEvent;
 import org.springframework.data.annotation.Id;
@@ -86,7 +86,7 @@ class AbstractMappingContextUnitTests {
 	@Test
 	void registersEntitiesOnInitialization() {
 
-		ApplicationContext applicationContext = mock(ApplicationContext.class);
+		var applicationContext = mock(ApplicationContext.class);
 
 		context.setInitialEntitySet(Collections.singleton(Person.class));
 		context.setApplicationEventPublisher(applicationContext);
@@ -100,7 +100,7 @@ class AbstractMappingContextUnitTests {
 	@Test // DATACMNS-214
 	void returnsNullPersistentEntityForSimpleTypes() {
 
-		SampleMappingContext context = new SampleMappingContext();
+		var context = new SampleMappingContext();
 		assertThat(context.getPersistentEntity(String.class)).isNull();
 	}
 
@@ -117,7 +117,7 @@ class AbstractMappingContextUnitTests {
 	@Test // DATACMNS-228
 	void doesNotCreatePersistentPropertyForGroovyMetaClass() {
 
-		SampleMappingContext mappingContext = new SampleMappingContext();
+		var mappingContext = new SampleMappingContext();
 		mappingContext.initialize();
 
 		PersistentEntity<Object, SamplePersistentProperty> entity = mappingContext
@@ -128,7 +128,7 @@ class AbstractMappingContextUnitTests {
 	@Test // DATACMNS-332
 	void usesMostConcreteProperty() {
 
-		SampleMappingContext mappingContext = new SampleMappingContext();
+		var mappingContext = new SampleMappingContext();
 		PersistentEntity<Object, SamplePersistentProperty> entity = mappingContext
 				.getRequiredPersistentEntity(Extension.class);
 
@@ -139,7 +139,7 @@ class AbstractMappingContextUnitTests {
 	@SuppressWarnings("rawtypes")
 	void returnsEntityForComponentType() {
 
-		SampleMappingContext mappingContext = new SampleMappingContext();
+		var mappingContext = new SampleMappingContext();
 		PersistentEntity<Object, SamplePersistentProperty> entity = mappingContext
 				.getRequiredPersistentEntity(Sample.class);
 
@@ -151,10 +151,10 @@ class AbstractMappingContextUnitTests {
 	@Test // DATACMNS-390
 	void exposesCopyOfPersistentEntitiesToAvoidConcurrentModificationException() {
 
-		SampleMappingContext context = new SampleMappingContext();
+		var context = new SampleMappingContext();
 		context.getPersistentEntity(ClassTypeInformation.MAP);
 
-		Iterator<BasicPersistentEntity<Object, SamplePersistentProperty>> iterator = context.getPersistentEntities()
+		var iterator = context.getPersistentEntities()
 				.iterator();
 
 		while (iterator.hasNext()) {
@@ -206,7 +206,7 @@ class AbstractMappingContextUnitTests {
 	void doesNotReturnPersistentEntityForCustomSimpleTypeProperty() {
 
 		PersistentEntity<Object, SamplePersistentProperty> entity = context.getRequiredPersistentEntity(Person.class);
-		SamplePersistentProperty property = entity.getRequiredPersistentProperty("date");
+		var property = entity.getRequiredPersistentProperty("date");
 
 		assertThat(context.getPersistentEntity(property)).isNull();
 	}
@@ -214,7 +214,7 @@ class AbstractMappingContextUnitTests {
 	@Test // DATACMNS-1574
 	void cleansUpCacheForRuntimeException() {
 
-		TypeRejectingMappingContext context = TypeRejectingMappingContext.rejecting(() -> new RuntimeException(),
+		var context = TypeRejectingMappingContext.rejecting(() -> new RuntimeException(),
 				Unsupported.class);
 
 		assertThatExceptionOfType(RuntimeException.class) //
@@ -229,7 +229,7 @@ class AbstractMappingContextUnitTests {
 	@Test // GH-3113
 	void shouldIgnoreKotlinOverrideCtorPropertyInSuperClass() {
 
-		BasicPersistentEntity<Object, SamplePersistentProperty> entity = context
+		var entity = context
 				.getPersistentEntity(ClassTypeInformation.from(ShadowingPropertyTypeWithCtor.class));
 		entity.doWithProperties((PropertyHandler<SamplePersistentProperty>) property -> {
 			assertThat(property.getField().getDeclaringClass()).isIn(ShadowingPropertyTypeWithCtor.class,
@@ -240,7 +240,7 @@ class AbstractMappingContextUnitTests {
 	@Test // GH-3113
 	void shouldIncludeAssignableKotlinOverridePropertyInSuperClass() {
 
-		BasicPersistentEntity<Object, SamplePersistentProperty> entity = context
+		var entity = context
 				.getPersistentEntity(ClassTypeInformation.from(ShadowingPropertyType.class));
 		entity.doWithProperties((PropertyHandler<SamplePersistentProperty>) property -> {
 			assertThat(property.getField().getDeclaringClass()).isIn(ShadowedPropertyType.class, ShadowingPropertyType.class);
@@ -250,7 +250,7 @@ class AbstractMappingContextUnitTests {
 	@Test // GH-3113
 	void shouldIncludeAssignableShadowedPropertyInSuperClass() {
 
-		BasicPersistentEntity<Object, SamplePersistentProperty> entity = context
+		var entity = context
 				.getPersistentEntity(ClassTypeInformation.from(ShadowingPropertyAssignable.class));
 
 		assertThat(StreamUtils.createStreamFromIterator(entity.iterator())
@@ -268,7 +268,7 @@ class AbstractMappingContextUnitTests {
 	@Test // GH-3113
 	void shouldIgnoreNonAssignableOverridePropertyInSuperClass() {
 
-		BasicPersistentEntity<Object, SamplePersistentProperty> entity = context
+		var entity = context
 				.getPersistentEntity(ClassTypeInformation.from(ShadowingPropertyNotAssignable.class));
 		entity.doWithProperties((PropertyHandler<SamplePersistentProperty>) property -> {
 			assertThat(property.getField().getDeclaringClass()).isEqualTo(ShadowingPropertyNotAssignable.class);
@@ -325,9 +325,9 @@ class AbstractMappingContextUnitTests {
 
 	private static void assertHasEntityFor(Class<?> type, SampleMappingContext context, boolean expected) {
 
-		boolean found = false;
+		var found = false;
 
-		for (BasicPersistentEntity<Object, SamplePersistentProperty> entity : context.getPersistentEntities()) {
+		for (var entity : context.getPersistentEntities()) {
 			if (entity.getType().equals(type)) {
 				found = true;
 				break;
