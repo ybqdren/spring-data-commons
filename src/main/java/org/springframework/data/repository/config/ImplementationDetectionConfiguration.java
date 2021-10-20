@@ -89,7 +89,8 @@ public interface ImplementationDetectionConfiguration {
 
 		Assert.hasText(fragmentInterfaceName, "Fragment interface name must not be null or empty!");
 
-		return new DefaultImplementationLookupConfiguration(this, fragmentInterfaceName);
+		return new DefaultImplementationLookupConfiguration(this, fragmentInterfaceName,
+				Introspector.decapitalize(ClassUtils.getShortName(fragmentInterfaceName).concat(getImplementationPostfix())));
 	}
 
 	/**
@@ -102,7 +103,8 @@ public interface ImplementationDetectionConfiguration {
 
 		Assert.notNull(config, "RepositoryConfiguration must not be null!");
 
-		return new DefaultImplementationLookupConfiguration(this, config.getRepositoryInterface()) {
+		return new DefaultImplementationLookupConfiguration(this, config.getRepositoryInterface(),
+				config.getImplementationBeanName()) {
 
 			/*
 			 * (non-Javadoc)

@@ -22,6 +22,7 @@ import org.springframework.core.type.classreading.MetadataReaderFactory;
 import org.springframework.core.type.filter.TypeFilter;
 import org.springframework.data.config.ConfigurationUtils;
 import org.springframework.data.repository.query.QueryLookupStrategy.Key;
+import org.springframework.data.util.Lazy;
 import org.springframework.data.util.Streamable;
 import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
@@ -44,6 +45,7 @@ public class DefaultRepositoryConfiguration<T extends RepositoryConfigurationSou
 	private final T configurationSource;
 	private final BeanDefinition definition;
 	private final RepositoryConfigurationExtension extension;
+	private final Lazy<String> beanName;
 
 	public DefaultRepositoryConfiguration(T configurationSource, BeanDefinition definition,
 			RepositoryConfigurationExtension extension) {
@@ -51,6 +53,7 @@ public class DefaultRepositoryConfiguration<T extends RepositoryConfigurationSou
 		this.configurationSource = configurationSource;
 		this.definition = definition;
 		this.extension = extension;
+		this.beanName = Lazy.of(() -> configurationSource.generateBeanName(definition));
 	}
 
 	/*
@@ -125,7 +128,7 @@ public class DefaultRepositoryConfiguration<T extends RepositoryConfigurationSou
 	 * @see org.springframework.data.repository.config.RepositoryConfiguration#getImplementationBeanName()
 	 */
 	public String getImplementationBeanName() {
-		return configurationSource.generateBeanName(definition)
+		return beanName.get()
 				+ configurationSource.getRepositoryImplementationPostfix().orElse("Impl");
 	}
 
@@ -166,6 +169,15 @@ public class DefaultRepositoryConfiguration<T extends RepositoryConfigurationSou
 
 		return configurationSource.getRepositoryFactoryBeanClassName()
 				.orElseGet(extension::getRepositoryFactoryBeanClassName);
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * @see org.springframework.data.repository.config.RepositoryConfiguration#getRepositoryBeanName()
+	 */
+	@Override
+	public String getRepositoryBeanName() {
+		return beanName.get();
 	}
 
 	/*
