@@ -352,12 +352,12 @@ public class NewClassTypeInformationUnitTests {
 	}
 
 	@Test // DATACMNS-783, DATACMNS-853
-	@Disabled("o_O")
+	@Disabled("o_O -  why would I want to despecialize something?")
 	public void specializesTypeUsingTypeVariableContext() {
 
 		var root = NewClassTypeInformation.from(Foo.class);
 
-		assertThat(root.getProperty("abstractBar").specialize(ClassTypeInformation.from(Bar.class)))//
+		assertThat(root.getProperty("abstractBar").specialize(NewClassTypeInformation.from(Bar.class)))//
 				.satisfies(it -> {
 					assertThat(it.getType()).isEqualTo(Bar.class);
 							assertThat(it.getProperty("field").getType()).isEqualTo(Character.class);
@@ -366,11 +366,10 @@ public class NewClassTypeInformationUnitTests {
 	}
 
 	@Test // DATACMNS-783
-	@Disabled
 	public void usesTargetTypeDirectlyIfNoGenericsAreInvolved() {
 
 		var root = NewClassTypeInformation.from(Foo.class);
-		ClassTypeInformation<?> from = ClassTypeInformation.from(Bar.class);
+		TypeInformation<?> from = NewClassTypeInformation.from(Bar.class);
 
 		assertThat(root.getProperty("object").specialize(from)).isEqualTo(from);
 	}
@@ -495,6 +494,16 @@ public class NewClassTypeInformationUnitTests {
 		TypeInformation<Leaf$$SpringProxy$873fa2e> typeInformationLeafProxy = NewClassTypeInformation.from(Leaf$$SpringProxy$873fa2e.class);
 
 		assertThat(typeInfoLeaf).isNotEqualTo(typeInformationLeafProxy);
+	}
+
+	@Test  // GH-2312
+	void typeInfoShouldPreserveGenericParameter() {
+
+		TypeInformation<Wrapper> wrapperTypeInfo = NewClassTypeInformation.from(Wrapper.class);
+		TypeInformation<?> fieldTypeInfo = wrapperTypeInfo.getProperty("field");
+		TypeInformation<?> valueTypeInfo = fieldTypeInfo.getProperty("value");
+
+		assertThat(valueTypeInfo.getType()).isEqualTo(Leaf.class);
 	}
 
 	static class StringMapContainer extends MapContainer<String> {
@@ -704,6 +713,12 @@ public class NewClassTypeInformationUnitTests {
 
 	static class SomeGeneric<T> {
 		T value;
+	}
+
+	static class GenericExtendingSomeGeneric<T> extends SomeGeneric<T> { }
+
+	static class Wrapper {
+		GenericExtendingSomeGeneric<Leaf> field;
 	}
 
 	static class SomeConcrete extends SomeGeneric<String> {}
