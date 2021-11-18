@@ -31,8 +31,16 @@
  */
 package org.springframework.data.util;
 
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
 import org.springframework.core.ResolvableType;
 import org.springframework.util.Assert;
+import org.springframework.util.ConcurrentReferenceHashMap;
+import org.springframework.util.ConcurrentReferenceHashMap.ReferenceType;
 
 /**
  * @author Christoph Strobl
@@ -40,11 +48,23 @@ import org.springframework.util.Assert;
  */
 public class NewClassTypeInformation<S> extends NewTypeDiscoverer<S> {
 
+	public static final ClassTypeInformation<Collection> COLLECTION = new ClassTypeInformation(Collection.class);
+	public static final ClassTypeInformation<List> LIST = new ClassTypeInformation(List.class);
+	public static final ClassTypeInformation<Set> SET = new ClassTypeInformation(Set.class);
+	public static final ClassTypeInformation<Map> MAP = new ClassTypeInformation(Map.class);
+	public static final ClassTypeInformation<Object> OBJECT = new ClassTypeInformation(Object.class);
+
+	private static final Map<Class<?>, TypeInformation<?>> cache = new ConcurrentReferenceHashMap<>(64,
+			ReferenceType.WEAK);
+
+	static {
+		Arrays.asList(COLLECTION, LIST, SET, MAP, OBJECT).forEach(it -> cache.put(it.getType(), it));
+	}
 
 	static <S> TypeInformation<S> from(Class<S> type) {
 
 		Assert.notNull(type, "Type must not be null!");
-		return new NewClassTypeInformation<S>(type);
+		return (TypeInformation<S>) cache.computeIfAbsent(type, NewClassTypeInformation::new);
 	}
 
 	NewClassTypeInformation(Class<S> type) {

@@ -163,7 +163,6 @@ public class NewClassTypeInformationUnitTests {
 	}
 
 	@Test // DATACMNS-77
-	@Disabled("need to implement caching !!")
 	public void returnsSameInstanceForCachedClass() {
 
 		TypeInformation<PropertyGetter> info = NewClassTypeInformation.from(PropertyGetter.class);
