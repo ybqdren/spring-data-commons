@@ -505,7 +505,7 @@ class TypeDiscoverer<S> implements TypeInformation<S> {
 
 		return (TypeInformation<? extends S>) (typeArguments.isEmpty() //
 				? type //
-				: type.createInfo(new SyntheticParamterizedType(type, getTypeArguments())));
+				: null); //type.createInfo(new SyntheticParamterizedType(type, getTypeArguments())));
 	}
 
 	@Nullable

@@ -21,6 +21,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.function.Consumer;
 
+import org.springframework.core.ResolvableType;
 import org.springframework.data.repository.Repository;
 import org.springframework.data.util.ClassTypeInformation;
 import org.springframework.data.util.TypeInformation;
@@ -184,6 +185,7 @@ public abstract class ClassUtils {
 		throw ex;
 	}
 
+	// todo owning type
 	private static TypeInformation<?> getEffectivelyReturnedTypeFrom(Method method) {
 
 		TypeInformation<?> returnType = ClassTypeInformation.fromReturnTypeOf(method);

@@ -48,7 +48,7 @@ public class NewClassTypeInformationUnitTests {
 	@Test
 	public void discoversTypeForSimpleGenericField() {
 
-		TypeInformation<ConcreteType> discoverer = NewClassTypeInformation.from(ConcreteType.class);
+		TypeInformation<ConcreteType> discoverer = ClassTypeInformation.from(ConcreteType.class);
 
 		assertThat(discoverer.getType()).isEqualTo(ConcreteType.class);
 
@@ -62,7 +62,7 @@ public class NewClassTypeInformationUnitTests {
 	@Test
 	public void discoversTypeForNestedGenericField() {
 
-		TypeInformation<ConcreteWrapper> discoverer = NewClassTypeInformation.from(ConcreteWrapper.class);
+		TypeInformation<ConcreteWrapper> discoverer = ClassTypeInformation.from(ConcreteWrapper.class);
 		assertThat(discoverer.getType()).isEqualTo(ConcreteWrapper.class);
 
 		assertThat(discoverer.getProperty("wrapped")).satisfies(it -> {
@@ -78,14 +78,14 @@ public class NewClassTypeInformationUnitTests {
 	@SuppressWarnings("rawtypes")
 	public void discoversBoundType() {
 
-		TypeInformation<GenericTypeWithBound> information = NewClassTypeInformation.from(GenericTypeWithBound.class);
+		TypeInformation<GenericTypeWithBound> information = ClassTypeInformation.from(GenericTypeWithBound.class);
 		assertThat(information.getProperty("person")).satisfies(it -> assertThat(it.getType()).isEqualTo(Person.class));
 	}
 
 	@Test
 	public void discoversBoundTypeForSpecialization() {
 
-		TypeInformation<SpecialGenericTypeWithBound> information = NewClassTypeInformation.from(SpecialGenericTypeWithBound.class);
+		TypeInformation<SpecialGenericTypeWithBound> information = ClassTypeInformation.from(SpecialGenericTypeWithBound.class);
 		assertThat(information.getProperty("person"))
 				.satisfies(it -> assertThat(it.getType()).isEqualTo(SpecialPerson.class));
 	}
@@ -94,7 +94,7 @@ public class NewClassTypeInformationUnitTests {
 	@SuppressWarnings("rawtypes")
 	public void discoversBoundTypeForNested() {
 
-		TypeInformation<AnotherGenericType> information = NewClassTypeInformation.from(AnotherGenericType.class);
+		TypeInformation<AnotherGenericType> information = ClassTypeInformation.from(AnotherGenericType.class);
 
 		assertThat(information.getProperty("nested"))
 				.satisfies(it -> assertThat(it.getType()).isEqualTo(GenericTypeWithBound.class));
@@ -105,7 +105,7 @@ public class NewClassTypeInformationUnitTests {
 	@Test
 	public void discoversArraysAndCollections() {
 
-		TypeInformation<StringCollectionContainer> information = NewClassTypeInformation.from(StringCollectionContainer.class);
+		TypeInformation<StringCollectionContainer> information = ClassTypeInformation.from(StringCollectionContainer.class);
 
 		var array = information.getProperty("array");
 
@@ -131,7 +131,7 @@ public class NewClassTypeInformationUnitTests {
 	@Test
 	public void discoversMapValueType() {
 
-		TypeInformation<StringMapContainer> information = NewClassTypeInformation.from(StringMapContainer.class);
+		TypeInformation<StringMapContainer> information = ClassTypeInformation.from(StringMapContainer.class);
 
 		var genericMap = information.getProperty("genericMap");
 
@@ -147,8 +147,8 @@ public class NewClassTypeInformationUnitTests {
 	@Test
 	public void typeInfoDoesNotEqualForGenericTypesWithDifferentParent() {
 
-		TypeInformation<ConcreteWrapper> first = NewClassTypeInformation.from(ConcreteWrapper.class);
-		TypeInformation<AnotherConcreteWrapper> second = NewClassTypeInformation.from(AnotherConcreteWrapper.class);
+		TypeInformation<ConcreteWrapper> first = ClassTypeInformation.from(ConcreteWrapper.class);
+		TypeInformation<AnotherConcreteWrapper> second = ClassTypeInformation.from(AnotherConcreteWrapper.class);
 
 		assertThat(first.getProperty("wrapped").equals(second.getProperty("wrapped"))).isFalse();
 	}
@@ -156,7 +156,7 @@ public class NewClassTypeInformationUnitTests {
 	@Test
 	public void handlesPropertyFieldMismatchCorrectly() {
 
-		TypeInformation<PropertyGetter> from = NewClassTypeInformation.from(PropertyGetter.class);
+		TypeInformation<PropertyGetter> from = ClassTypeInformation.from(PropertyGetter.class);
 
 		assertThat(from.getProperty("_name")).satisfies(it -> assertThat(it.getType()).isEqualTo(String.class));
 		assertThat(from.getProperty("name")).satisfies(it -> assertThat(it.getType()).isEqualTo(byte[].class));
@@ -165,14 +165,14 @@ public class NewClassTypeInformationUnitTests {
 	@Test // DATACMNS-77
 	public void returnsSameInstanceForCachedClass() {
 
-		TypeInformation<PropertyGetter> info = NewClassTypeInformation.from(PropertyGetter.class);
-		assertThat(NewClassTypeInformation.from(PropertyGetter.class)).isSameAs(info);
+		TypeInformation<PropertyGetter> info = ClassTypeInformation.from(PropertyGetter.class);
+		assertThat(ClassTypeInformation.from(PropertyGetter.class)).isSameAs(info);
 	}
 
 	@Test // DATACMNS-39
 	public void resolvesWildCardTypeCorrectly() {
 
-		TypeInformation<ClassWithWildCardBound> information = NewClassTypeInformation.from(ClassWithWildCardBound.class);
+		TypeInformation<ClassWithWildCardBound> information = ClassTypeInformation.from(ClassWithWildCardBound.class);
 
 		var wildcard = information.getProperty("wildcard");
 
@@ -191,7 +191,7 @@ public class NewClassTypeInformationUnitTests {
 	@Test
 	public void resolvesTypeParametersCorrectly() {
 
-		TypeInformation<ConcreteType> information = NewClassTypeInformation.from(ConcreteType.class);
+		TypeInformation<ConcreteType> information = ClassTypeInformation.from(ConcreteType.class);
 		var superTypeInformation = information.getSuperTypeInformation(GenericType.class);
 
 		var parameters = superTypeInformation.getTypeArguments();
@@ -203,7 +203,7 @@ public class NewClassTypeInformationUnitTests {
 	@Test
 	public void resolvesNestedInheritedTypeParameters() {
 
-		TypeInformation<SecondExtension> information = NewClassTypeInformation.from(SecondExtension.class);
+		TypeInformation<SecondExtension> information = ClassTypeInformation.from(SecondExtension.class);
 		var superTypeInformation = information.getSuperTypeInformation(Base.class);
 
 		var parameters = superTypeInformation.getTypeArguments();
@@ -214,7 +214,7 @@ public class NewClassTypeInformationUnitTests {
 	@Test
 	public void discoveresMethodParameterTypesCorrectly() throws Exception {
 
-		TypeInformation<SecondExtension> information = NewClassTypeInformation.from(SecondExtension.class);
+		TypeInformation<SecondExtension> information = ClassTypeInformation.from(SecondExtension.class);
 		var method = SecondExtension.class.getMethod("foo", Base.class);
 		var informations = information.getParameterTypes(method);
 		var returnTypeInformation = information.getReturnType(method);
@@ -231,55 +231,55 @@ public class NewClassTypeInformationUnitTests {
 	@Test
 	public void discoversImplementationBindingCorrectlyForString() throws Exception {
 
-		TypeInformation<TypedClient> information = NewClassTypeInformation.from(TypedClient.class);
+		TypeInformation<TypedClient> information = ClassTypeInformation.from(TypedClient.class);
 		var method = TypedClient.class.getMethod("stringMethod", GenericInterface.class);
 
 		var parameterType = information.getParameterTypes(method).get(0);
 
-		TypeInformation<StringImplementation> stringInfo = NewClassTypeInformation.from(StringImplementation.class);
+		TypeInformation<StringImplementation> stringInfo = ClassTypeInformation.from(StringImplementation.class);
 
 		assertThat(parameterType.isAssignableFrom(stringInfo)).isTrue();
 
 
 
 		assertThat(stringInfo.getSuperTypeInformation(GenericInterface.class)).isEqualTo(parameterType);
-		assertThat(parameterType.isAssignableFrom(NewClassTypeInformation.from(LongImplementation.class))).isFalse();
+		assertThat(parameterType.isAssignableFrom(ClassTypeInformation.from(LongImplementation.class))).isFalse();
 		assertThat(parameterType
-				.isAssignableFrom(NewClassTypeInformation.from(StringImplementation.class).getSuperTypeInformation(GenericInterface.class))).isTrue();
+				.isAssignableFrom(ClassTypeInformation.from(StringImplementation.class).getSuperTypeInformation(GenericInterface.class))).isTrue();
 	}
 
 	@Test
 	public void discoversImplementationBindingCorrectlyForLong() throws Exception {
 
-		TypeInformation<TypedClient> information = NewClassTypeInformation.from(TypedClient.class);
+		TypeInformation<TypedClient> information = ClassTypeInformation.from(TypedClient.class);
 		var method = TypedClient.class.getMethod("longMethod", GenericInterface.class);
 
 		var parameterType = information.getParameterTypes(method).get(0);
 
-		assertThat(parameterType.isAssignableFrom(NewClassTypeInformation.from(StringImplementation.class))).isFalse();
-		assertThat(parameterType.isAssignableFrom(NewClassTypeInformation.from(LongImplementation.class))).isTrue();
+		assertThat(parameterType.isAssignableFrom(ClassTypeInformation.from(StringImplementation.class))).isFalse();
+		assertThat(parameterType.isAssignableFrom(ClassTypeInformation.from(LongImplementation.class))).isTrue();
 		assertThat(parameterType
-				.isAssignableFrom(NewClassTypeInformation.from(StringImplementation.class).getSuperTypeInformation(GenericInterface.class))).isFalse();
+				.isAssignableFrom(ClassTypeInformation.from(StringImplementation.class).getSuperTypeInformation(GenericInterface.class))).isFalse();
 	}
 
 	@Test
 	public void discoversImplementationBindingCorrectlyForNumber() throws Exception {
 
-		TypeInformation<TypedClient> information = NewClassTypeInformation.from(TypedClient.class);
+		TypeInformation<TypedClient> information = ClassTypeInformation.from(TypedClient.class);
 		var method = TypedClient.class.getMethod("boundToNumberMethod", GenericInterface.class);
 
 		var parameterType = information.getParameterTypes(method).get(0);
 
-		assertThat(parameterType.isAssignableFrom(NewClassTypeInformation.from(StringImplementation.class))).isFalse();
-		assertThat(parameterType.isAssignableFrom(NewClassTypeInformation.from(LongImplementation.class))).isTrue();
+		assertThat(parameterType.isAssignableFrom(ClassTypeInformation.from(StringImplementation.class))).isFalse();
+		assertThat(parameterType.isAssignableFrom(ClassTypeInformation.from(LongImplementation.class))).isTrue();
 		assertThat(parameterType
-				.isAssignableFrom(NewClassTypeInformation.from(StringImplementation.class).getSuperTypeInformation(GenericInterface.class))).isFalse();
+				.isAssignableFrom(ClassTypeInformation.from(StringImplementation.class).getSuperTypeInformation(GenericInterface.class))).isFalse();
 	}
 
 	@Test
 	public void returnsComponentTypeForMultiDimensionalArrayCorrectly() {
 
-		TypeInformation<?> information = NewClassTypeInformation.from(String[][].class);
+		TypeInformation<?> information = ClassTypeInformation.from(String[][].class);
 
 		assertThat(information.getType()).isEqualTo(String[][].class);
 		assertThat(information.getComponentType()).satisfies(it -> assertThat(it.getType()).isEqualTo(String[].class));
@@ -289,28 +289,28 @@ public class NewClassTypeInformationUnitTests {
 	@Test // DATACMNS-309
 	public void findsGetterOnInterface() {
 
-		TypeInformation<Product> information = NewClassTypeInformation.from(Product.class);
+		TypeInformation<Product> information = ClassTypeInformation.from(Product.class);
 
-		assertThat(information.getProperty("category.id")).isEqualTo(NewClassTypeInformation.from(Long.class));
+		assertThat(information.getProperty("category.id")).isEqualTo(ClassTypeInformation.from(Long.class));
 	}
 
 	@Test // DATACMNS-387
 	public void rejectsNullClass() {
-		assertThatIllegalArgumentException().isThrownBy(() -> NewClassTypeInformation.from(null));
+		assertThatIllegalArgumentException().isThrownBy(() -> ClassTypeInformation.from(null));
 	}
 
 	@Test // DATACMNS-422
 	@Disabled
 	public void returnsEmptyOptionalForRawTypesOnly() {
 
-		assertThat(NewClassTypeInformation.from(MyRawIterable.class).getComponentType()).isNull();
-		assertThat(NewClassTypeInformation.from(MyIterable.class).getComponentType()).isNotNull();
+		assertThat(ClassTypeInformation.from(MyRawIterable.class).getComponentType()).isNull();
+		assertThat(ClassTypeInformation.from(MyIterable.class).getComponentType()).isNotNull();
 	}
 
 	@Test // DATACMNS-440
 	public void detectsSpecialMapAsMapValueType() {
 
-		var seriously = NewClassTypeInformation.from(SuperGenerics.class).getProperty("seriously");
+		var seriously = ClassTypeInformation.from(SuperGenerics.class).getProperty("seriously");
 
 		// Type
 		assertThat(seriously.getType()).isEqualTo(SortedMap.class);
@@ -329,14 +329,14 @@ public class NewClassTypeInformationUnitTests {
 
 	@Test // DATACMNS-446
 	public void createsToStringRepresentation() {
-		assertThat(NewClassTypeInformation.from(SpecialPerson.class).toString())
-				.isEqualTo("org.springframework.data.util.NewClassTypeInformationUnitTests$SpecialPerson");
+		assertThat(ClassTypeInformation.from(SpecialPerson.class).toString())
+				.isEqualTo("org.springframework.data.util.ClassTypeInformationUnitTests$SpecialPerson");
 	}
 
 	@Test // DATACMNS-590
 	public void resolvesNestedGenericsToConcreteType() {
 
-		var rootType = NewClassTypeInformation.from(ConcreteRoot.class);
+		var rootType = ClassTypeInformation.from(ConcreteRoot.class);
 
 		assertThat(rootType.getProperty("subs").getActualType().getProperty("subSub").getType())//
 				.isEqualTo(ConcreteSubSub.class);
@@ -345,7 +345,7 @@ public class NewClassTypeInformationUnitTests {
 	@Test // DATACMNS-594
 	public void considersGenericsOfTypeBounds() {
 
-		assertThat(NewClassTypeInformation.from(ConcreteRootIntermediate.class)
+		assertThat(ClassTypeInformation.from(ConcreteRootIntermediate.class)
 				.getProperty("intermediate.content.intermediate.content").getType())//
 						.isEqualTo(Leaf.class);
 	}
@@ -354,9 +354,9 @@ public class NewClassTypeInformationUnitTests {
 	@Disabled("o_O -  why would I want to despecialize something?")
 	public void specializesTypeUsingTypeVariableContext() {
 
-		var root = NewClassTypeInformation.from(Foo.class);
+		var root = ClassTypeInformation.from(Foo.class);
 
-		assertThat(root.getProperty("abstractBar").specialize(NewClassTypeInformation.from(Bar.class)))//
+		assertThat(root.getProperty("abstractBar").specialize(ClassTypeInformation.from(Bar.class)))//
 				.satisfies(it -> {
 					assertThat(it.getType()).isEqualTo(Bar.class);
 							assertThat(it.getProperty("field").getType()).isEqualTo(Character.class);
@@ -367,8 +367,8 @@ public class NewClassTypeInformationUnitTests {
 	@Test // DATACMNS-783
 	public void usesTargetTypeDirectlyIfNoGenericsAreInvolved() {
 
-		var root = NewClassTypeInformation.from(Foo.class);
-		TypeInformation<?> from = NewClassTypeInformation.from(Bar.class);
+		var root = ClassTypeInformation.from(Foo.class);
+		TypeInformation<?> from = ClassTypeInformation.from(Bar.class);
 
 		assertThat(root.getProperty("object").specialize(from)).isEqualTo(from);
 	}
@@ -377,7 +377,7 @@ public class NewClassTypeInformationUnitTests {
 	@Disabled
 	public void specializedTypeEqualsAndHashCode() {
 
-		var root = NewClassTypeInformation.from(Foo.class);
+		var root = ClassTypeInformation.from(Foo.class);
 
 		var abstractBar = root.getProperty("abstractBar");
 
@@ -392,7 +392,7 @@ public class NewClassTypeInformationUnitTests {
 	@Test // DATACMNS-896
 	public void prefersLocalTypeMappingOverNestedWithSameGenericType() {
 
-		var information = NewClassTypeInformation.from(Concrete.class);
+		var information = ClassTypeInformation.from(Concrete.class);
 
 		assertThat(information.getProperty("field").getType()).isEqualTo(Nested.class);
 	}
@@ -400,7 +400,7 @@ public class NewClassTypeInformationUnitTests {
 	@Test // DATACMNS-940
 	public void detectsVavrTraversableComponentType() {
 
-		var information = NewClassTypeInformation.from(SampleTraversable.class);
+		var information = ClassTypeInformation.from(SampleTraversable.class);
 
 		assertThat(information.getComponentType().getType()).isAssignableFrom(Integer.class);
 	}
@@ -408,7 +408,7 @@ public class NewClassTypeInformationUnitTests {
 	@Test // DATACMNS-940
 	public void detectsVavrMapComponentAndValueType() {
 
-		var information = NewClassTypeInformation.from(SampleMap.class);
+		var information = ClassTypeInformation.from(SampleMap.class);
 
 		assertThat(information.getComponentType().getType()).isAssignableFrom(String.class);
 
@@ -418,8 +418,8 @@ public class NewClassTypeInformationUnitTests {
 	@Test // DATACMNS-1138
 	public void usesTargetTypeForWildcardedBaseOnSpecialization() {
 
-		var wrapper = NewClassTypeInformation.from(WildcardedWrapper.class);
-		var concrete = NewClassTypeInformation.from(SomeConcrete.class);
+		var wrapper = ClassTypeInformation.from(WildcardedWrapper.class);
+		var concrete = ClassTypeInformation.from(SomeConcrete.class);
 
 		var property = wrapper.getRequiredProperty("wildcarded");
 
@@ -429,7 +429,7 @@ public class NewClassTypeInformationUnitTests {
 	@Test // DATACMNS-1571
 	public void considersGenericsOfTypeToSpecializeToIfFullyResolved() {
 
-		TypeInformation<StoredEvent> storeEvent = NewClassTypeInformation.from(StoredEvent.class);
+		TypeInformation<StoredEvent> storeEvent = ClassTypeInformation.from(StoredEvent.class);
 		assertThat(storeEvent.getType()).isEqualTo(StoredEvent.class);
 
 		var domainEvent = (TypeInformation<DomainEvent>) storeEvent.getProperty("event");
@@ -463,7 +463,7 @@ public class NewClassTypeInformationUnitTests {
 	@Test // DATACMNS-1828
 	void discoversMapKeyAndValueTypeFromTypedMap() {
 
-		TypeInformation<TypeWithTypedMap> information = NewClassTypeInformation.from(TypeWithTypedMap.class);
+		TypeInformation<TypeWithTypedMap> information = ClassTypeInformation.from(TypeWithTypedMap.class);
 
 		var typedMap = information.getProperty("typedMap");
 
@@ -489,8 +489,8 @@ public class NewClassTypeInformationUnitTests {
 	@Test // GH-2485
 	public void proxyTypeInformationShouldNotEqualUserClassTypeInfo () {
 
-		TypeInformation<Leaf> typeInfoLeaf = NewClassTypeInformation.from(Leaf.class);
-		TypeInformation<Leaf$$SpringProxy$873fa2e> typeInformationLeafProxy = NewClassTypeInformation.from(Leaf$$SpringProxy$873fa2e.class);
+		TypeInformation<Leaf> typeInfoLeaf = ClassTypeInformation.from(Leaf.class);
+		TypeInformation<Leaf$$SpringProxy$873fa2e> typeInformationLeafProxy = ClassTypeInformation.from(Leaf$$SpringProxy$873fa2e.class);
 
 		assertThat(typeInfoLeaf).isNotEqualTo(typeInformationLeafProxy);
 	}
@@ -498,7 +498,7 @@ public class NewClassTypeInformationUnitTests {
 	@Test  // GH-2312
 	void typeInfoShouldPreserveGenericParameter() {
 
-		TypeInformation<Wrapper> wrapperTypeInfo = NewClassTypeInformation.from(Wrapper.class);
+		TypeInformation<Wrapper> wrapperTypeInfo = ClassTypeInformation.from(Wrapper.class);
 		TypeInformation<?> fieldTypeInfo = wrapperTypeInfo.getProperty("field");
 		TypeInformation<?> valueTypeInfo = fieldTypeInfo.getProperty("value");
 
