@@ -330,7 +330,7 @@ public class NewClassTypeInformationUnitTests {
 	@Test // DATACMNS-446
 	public void createsToStringRepresentation() {
 		assertThat(ClassTypeInformation.from(SpecialPerson.class).toString())
-				.isEqualTo("org.springframework.data.util.ClassTypeInformationUnitTests$SpecialPerson");
+				.isEqualTo("org.springframework.data.util.NewClassTypeInformationUnitTests$SpecialPerson");
 	}
 
 	@Test // DATACMNS-590

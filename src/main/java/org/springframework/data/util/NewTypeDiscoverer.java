@@ -61,8 +61,6 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
-import java.util.stream.IntStream;
-import java.util.stream.Stream;
 
 import org.springframework.beans.BeanUtils;
 import org.springframework.core.MethodParameter;
@@ -94,7 +92,7 @@ public class NewTypeDiscoverer<S> implements TypeInformation<S> {
 		MAP_TYPES = mapTypes.toArray(new Class[0]);
 	}
 
-	private ResolvableType type;
+	 ResolvableType resolvableType;
 	private Map<String, Optional<TypeInformation<?>>> fields = new ConcurrentHashMap<>();
 
 	private final Lazy<TypeInformation<?>> componentType;
@@ -102,7 +100,7 @@ public class NewTypeDiscoverer<S> implements TypeInformation<S> {
 
 	public NewTypeDiscoverer(ResolvableType type) {
 
-		this.type = type;
+		this.resolvableType = type;
 		this.componentType = Lazy.of(this::doGetComponentType);
 		this.valueType = Lazy.of(this::doGetMapValueType);
 	}
@@ -139,15 +137,15 @@ public class NewTypeDiscoverer<S> implements TypeInformation<S> {
 
 	private Optional<TypeInformation<?>> getPropertyInformation(String fieldname) {
 
-		Class<?> rawType = type.toClass();
+		Class<?> rawType = resolvableType.toClass();
 		var field = ReflectionUtils.findField(rawType, fieldname);
 
 		if (field != null) {
-			return Optional.of(new NewTypeDiscoverer(ResolvableType.forField(field, type)));
+			return Optional.of(new NewTypeDiscoverer(ResolvableType.forField(field, resolvableType)));
 		}
 
 		return findPropertyDescriptor(rawType, fieldname).map(it -> {
-			return new NewTypeDiscoverer(ResolvableType.forType(it.getPropertyType(), type));
+			return new NewTypeDiscoverer(ResolvableType.forType(it.getPropertyType(), resolvableType));
 		});
 	}
 
@@ -191,23 +189,23 @@ public class NewTypeDiscoverer<S> implements TypeInformation<S> {
 		var rawType = getType();
 
 		if (rawType.isArray()) {
-			return new NewTypeDiscoverer<>(type.getComponentType());
+			return new NewTypeDiscoverer<>(resolvableType.getComponentType());
 		}
 
 		if (isMap()) {
 			if(ClassUtils.isAssignable(Map.class, rawType)) {
-				ResolvableType mapValueType = type.asMap().getGeneric(0);
+				ResolvableType mapValueType = resolvableType.asMap().getGeneric(0);
 				if (ResolvableType.NONE.equals(mapValueType)) {
 					return null;
 				}
 
 				return mapValueType != null ? new NewTypeDiscoverer(mapValueType) : new ClassTypeInformation<>(Object.class);
 			}
-			if (type.hasGenerics()) {
-				ResolvableType mapValueType = type.getGeneric(0);
+			if (resolvableType.hasGenerics()) {
+				ResolvableType mapValueType = resolvableType.getGeneric(0);
 				return mapValueType != null ? new NewTypeDiscoverer(mapValueType) : new ClassTypeInformation<>(Object.class);
 			}
-			return Arrays.stream(type.getInterfaces()).filter(ResolvableType::hasGenerics)
+			return Arrays.stream(resolvableType.getInterfaces()).filter(ResolvableType::hasGenerics)
 					.findFirst()
 					.map(it -> it.getGeneric(0))
 					.map(NewTypeDiscoverer::new)
@@ -216,16 +214,16 @@ public class NewTypeDiscoverer<S> implements TypeInformation<S> {
 
 		if (Iterable.class.isAssignableFrom(rawType)) {
 
-			ResolvableType mapValueType = type.as(Iterable.class).getGeneric(0);
+			ResolvableType mapValueType = resolvableType.as(Iterable.class).getGeneric(0);
 			if(ResolvableType.NONE.equals(mapValueType) ) {
 				return null;
 			}
-			if (type.hasGenerics()) {
-				mapValueType = type.getGeneric(0);
+			if (resolvableType.hasGenerics()) {
+				mapValueType = resolvableType.getGeneric(0);
 				return mapValueType != null ? new NewTypeDiscoverer(mapValueType) : new ClassTypeInformation<>(Object.class);
 			}
 
-			return Arrays.stream(type.getInterfaces()).filter(ResolvableType::hasGenerics)
+			return Arrays.stream(resolvableType.getInterfaces()).filter(ResolvableType::hasGenerics)
 					.findFirst()
 					.map(it -> it.getGeneric(0))
 					.filter(it -> !ResolvableType.NONE.equals(it))
@@ -241,15 +239,15 @@ public class NewTypeDiscoverer<S> implements TypeInformation<S> {
 		}
 
 		if (isNullableWrapper()) {
-			ResolvableType mapValueType = type.getGeneric(0);
+			ResolvableType mapValueType = resolvableType.getGeneric(0);
 			if(ResolvableType.NONE.equals(mapValueType) ) {
 				return null;
 			}
 			return mapValueType != null ? new NewTypeDiscoverer(mapValueType) : new ClassTypeInformation<>(Object.class);
 		}
 
-		if (type.hasGenerics()) {
-			ResolvableType mapValueType = type.getGeneric(0);
+		if (resolvableType.hasGenerics()) {
+			ResolvableType mapValueType = resolvableType.getGeneric(0);
 			return mapValueType != null ? new NewTypeDiscoverer(mapValueType) : new ClassTypeInformation<>(Object.class);
 		}
 
@@ -285,28 +283,28 @@ public class NewTypeDiscoverer<S> implements TypeInformation<S> {
 
 		if(isMap()) {
 			if(ClassUtils.isAssignable(Map.class, getType())) {
-				ResolvableType mapValueType = type.asMap().getGeneric(1);
+				ResolvableType mapValueType = resolvableType.asMap().getGeneric(1);
 				if (ResolvableType.NONE.equals(mapValueType)) {
 					return null;
 				}
 
 				return mapValueType != null ? new NewTypeDiscoverer(mapValueType) : new ClassTypeInformation<>(Object.class);
 			}
-			if (type.hasGenerics()) {
-				ResolvableType mapValueType = type.getGeneric(1);
+			if (resolvableType.hasGenerics()) {
+				ResolvableType mapValueType = resolvableType.getGeneric(1);
 				return mapValueType != null ? new NewTypeDiscoverer(mapValueType) : new ClassTypeInformation<>(Object.class);
 			}
-			return Arrays.stream(type.getInterfaces()).filter(ResolvableType::hasGenerics)
+			return Arrays.stream(resolvableType.getInterfaces()).filter(ResolvableType::hasGenerics)
 					.findFirst()
 					.map(it -> it.getGeneric(1))
 					.map(NewTypeDiscoverer::new)
 					.orElse(null);
 		}
 
-		if(!type.hasGenerics()) {
+		if(!resolvableType.hasGenerics()) {
 			return null;
 		}
-		ResolvableType x = Arrays.stream(type.getGenerics()).skip(1).findFirst().orElse(null);
+		ResolvableType x = Arrays.stream(resolvableType.getGenerics()).skip(1).findFirst().orElse(null);
 		if(x == null || ResolvableType.NONE.equals(x)) {
 			return  null;
 		}
@@ -316,12 +314,12 @@ public class NewTypeDiscoverer<S> implements TypeInformation<S> {
 
 	@Override
 	public Class<S> getType() {
-		return (Class<S>) type.toClass();
+		return (Class<S>) resolvableType.toClass();
 	}
 
 	@Override
 	public ClassTypeInformation<?> getRawTypeInformation() {
-		return new ClassTypeInformation<>(this.type.getRawClass());
+		return new ClassTypeInformation<>(this.resolvableType.getRawClass());
 	}
 
 	@Nullable
@@ -353,7 +351,7 @@ public class NewTypeDiscoverer<S> implements TypeInformation<S> {
 	public List<TypeInformation<?>> getParameterTypes(Method method) {
 
 		return Streamable.of(method.getParameters()).stream().map(MethodParameter::forParameter)
-				.map(it -> ResolvableType.forMethodParameter(it, type)).map(NewTypeDiscoverer::new)
+				.map(it -> ResolvableType.forMethodParameter(it, resolvableType)).map(NewTypeDiscoverer::new)
 				.collect(Collectors.toList());
 
 	}
@@ -374,12 +372,12 @@ public class NewTypeDiscoverer<S> implements TypeInformation<S> {
 
 		List<ResolvableType> candidates = new ArrayList<>();
 
-		ResolvableType genericSuperclass = type.getSuperType();
+		ResolvableType genericSuperclass = resolvableType.getSuperType();
 		if (genericSuperclass != null) {
 			candidates.add(genericSuperclass);
 		}
 
-		candidates.addAll(Arrays.asList(type.getInterfaces()));
+		candidates.addAll(Arrays.asList(resolvableType.getInterfaces()));
 
 		for (var candidate : candidates) {
 			if (ObjectUtils.nullSafeEquals(superType, candidate.toClass())) {
@@ -387,7 +385,7 @@ public class NewTypeDiscoverer<S> implements TypeInformation<S> {
 			} else {
 				var sup = candidate.getSuperType();
 				if (sup != null && !ResolvableType.NONE.equals(sup)) {
-					if(sup.equals(type)) {
+					if(sup.equals(resolvableType)) {
 						return this;
 					}
 					return new NewTypeDiscoverer(sup);
@@ -395,7 +393,7 @@ public class NewTypeDiscoverer<S> implements TypeInformation<S> {
 			}
 		}
 
-		return new NewTypeDiscoverer(type.as(superType));
+		return new NewTypeDiscoverer(resolvableType.as(superType));
 	}
 
 	@Override
@@ -410,7 +408,7 @@ public class NewTypeDiscoverer<S> implements TypeInformation<S> {
 			return true;
 		}
 
-		if(type.isAssignableFrom(target.getType())) {
+		if(resolvableType.isAssignableFrom(target.getType())) {
 			return true;
 		}
 
@@ -420,14 +418,26 @@ public class NewTypeDiscoverer<S> implements TypeInformation<S> {
 	@Override
 	public List<TypeInformation<?>> getTypeArguments() {
 
-		if (!type.hasGenerics()) {
+		if (!resolvableType.hasGenerics()) {
 			return Collections.emptyList();
 		}
-		return Arrays.stream(type.getGenerics()).map(NewTypeDiscoverer::new).collect(Collectors.toList());
+		return Arrays.stream(resolvableType.getGenerics()).map(NewTypeDiscoverer::new).collect(Collectors.toList());
 	}
 
 	@Override
 	public TypeInformation<? extends S> specialize(ClassTypeInformation<?> type) {
+//		if(isAssignableFrom(type)) {
+//			return new ClassTypeInformation(type.getType());
+//		}
+//		return new NewTypeDiscoverer(type.resolvableType.as(getType()));
+//		if(type.resolvableType.isAssignableFrom(type.resolvableType)) {
+//			return (TypeInformation<? extends S>) type;
+//		}
+
+		if(this.resolvableType.getGenerics().length == type.resolvableType.getGenerics().length) {
+			return new NewTypeDiscoverer<>(ResolvableType.forClassWithGenerics(type.getType(), this.resolvableType.getGenerics()));
+		}
+
 		return new ClassTypeInformation(type.getType());
 	}
 
@@ -438,12 +448,12 @@ public class NewTypeDiscoverer<S> implements TypeInformation<S> {
 
 		NewTypeDiscoverer<?> that = (NewTypeDiscoverer<?>) o;
 
-		if(!ObjectUtils.nullSafeEquals(type.getType(), that.type.getType())) {
+		if(!ObjectUtils.nullSafeEquals(resolvableType.getType(), that.resolvableType.getType())) {
 			return false;
 		}
 
-		List<? extends Class<?>> collect1 = Arrays.stream(type.getGenerics()).map(ResolvableType::toClass).collect(Collectors.toList());
-		List<? extends Class<?>> collect2 = Arrays.stream(that.type.getGenerics()).map(ResolvableType::toClass).collect(Collectors.toList());
+		List<? extends Class<?>> collect1 = Arrays.stream(resolvableType.getGenerics()).map(ResolvableType::toClass).collect(Collectors.toList());
+		List<? extends Class<?>> collect2 = Arrays.stream(that.resolvableType.getGenerics()).map(ResolvableType::toClass).collect(Collectors.toList());
 
 		if(!ObjectUtils.nullSafeEquals(collect1, collect2)) {
 			return false;
@@ -453,7 +463,7 @@ public class NewTypeDiscoverer<S> implements TypeInformation<S> {
 
 	@Override
 	public int hashCode() {
-		return ObjectUtils.nullSafeHashCode(type.toClass());
+		return ObjectUtils.nullSafeHashCode(resolvableType.toClass());
 	}
 
 	@Override
