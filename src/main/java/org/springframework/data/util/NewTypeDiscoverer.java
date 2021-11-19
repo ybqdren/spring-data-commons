@@ -214,21 +214,25 @@ public class NewTypeDiscoverer<S> implements TypeInformation<S> {
 
 		if (Iterable.class.isAssignableFrom(rawType)) {
 
-			ResolvableType mapValueType = resolvableType.as(Iterable.class).getGeneric(0);
-			if(ResolvableType.NONE.equals(mapValueType) ) {
+			ResolvableType iterableType = resolvableType.as(Iterable.class);
+			ResolvableType mapValueType = iterableType.getGeneric(0);
+			if(ResolvableType.NONE.equals(mapValueType)) {
 				return null;
 			}
+
 			if (resolvableType.hasGenerics()) {
 				mapValueType = resolvableType.getGeneric(0);
 				return mapValueType != null ? new NewTypeDiscoverer(mapValueType) : new ClassTypeInformation<>(Object.class);
 			}
 
-			return Arrays.stream(resolvableType.getInterfaces()).filter(ResolvableType::hasGenerics)
-					.findFirst()
-					.map(it -> it.getGeneric(0))
-					.filter(it -> !ResolvableType.NONE.equals(it))
-					.map(NewTypeDiscoverer::new)
-					.orElse(null);
+			return mapValueType.resolve() != null ? new NewTypeDiscoverer<>(mapValueType) :null;
+
+//			return Arrays.stream(resolvableType.getInterfaces()).filter(ResolvableType::hasGenerics)
+//					.findFirst()
+//					.map(it -> it.getGeneric(0))
+//					.filter(it -> !ResolvableType.NONE.equals(it))
+//					.map(NewTypeDiscoverer::new)
+//					.orElse(null);
 
 //			if(type.getComponentType().equals(ResolvableType.NONE)) {
 //				if(!type.hasGenerics()) {
