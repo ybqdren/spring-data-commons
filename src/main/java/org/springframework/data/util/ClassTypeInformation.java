@@ -63,7 +63,7 @@ import org.springframework.util.ConcurrentReferenceHashMap.ReferenceType;
  * @author Christoph Strobl
  * @since 2021/11
  */
-public class ClassTypeInformation<S> extends NewTypeDiscoverer<S> {
+public class ClassTypeInformation<S> extends TypeDiscoverer<S> {
 
 	public static final ClassTypeInformation<Collection> COLLECTION = new ClassTypeInformation(Collection.class);
 	public static final ClassTypeInformation<List> LIST = new ClassTypeInformation(List.class);
@@ -75,7 +75,7 @@ public class ClassTypeInformation<S> extends NewTypeDiscoverer<S> {
 			ReferenceType.WEAK);
 
 	public static TypeInformation<?> fromReturnTypeOf(Method method) {
-		return new NewTypeDiscoverer<>(ResolvableType.forMethodReturnType(method));
+		return new TypeDiscoverer<>(ResolvableType.forMethodReturnType(method));
 	}
 //
 //	public static TypeInformation<?> fromReturnTypeOf(Method method, Class<?> actualType) {

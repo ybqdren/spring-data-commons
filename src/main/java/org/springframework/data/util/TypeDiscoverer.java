@@ -1,11 +1,43 @@
 /*
- * Copyright 2011-2021 the original author or authors.
+ * Copyright 2021. the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *      https://www.apache.org/licenses/LICENSE-2.0
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+/*
+ * Copyright 2021. the original author or authors.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+/*
+ * Copyright 2021 the original author or authors.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -17,17 +49,11 @@ package org.springframework.data.util;
 
 import java.beans.PropertyDescriptor;
 import java.lang.reflect.Constructor;
-import java.lang.reflect.GenericArrayType;
 import java.lang.reflect.Method;
-import java.lang.reflect.ParameterizedType;
-import java.lang.reflect.Type;
-import java.lang.reflect.TypeVariable;
-import java.lang.reflect.WildcardType;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -37,7 +63,8 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
 import org.springframework.beans.BeanUtils;
-import org.springframework.core.GenericTypeResolver;
+import org.springframework.core.MethodParameter;
+import org.springframework.core.ResolvableType;
 import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
 import org.springframework.util.ClassUtils;
@@ -45,13 +72,10 @@ import org.springframework.util.ObjectUtils;
 import org.springframework.util.ReflectionUtils;
 
 /**
- * Basic {@link TypeDiscoverer} that contains basic functionality to discover property types.
- *
- * @author Oliver Gierke
  * @author Christoph Strobl
- * @author Mark Paluch
+ * @since 2021/11
  */
-class TypeDiscoverer<S> implements TypeInformation<S> {
+public class TypeDiscoverer<S> implements TypeInformation<S> {
 
 	private static final Class<?>[] MAP_TYPES;
 
@@ -69,176 +93,77 @@ class TypeDiscoverer<S> implements TypeInformation<S> {
 		MAP_TYPES = mapTypes.toArray(new Class[0]);
 	}
 
-	private final Type type;
-	private final Map<TypeVariable<?>, Type> typeVariableMap;
-	private final Map<String, Optional<TypeInformation<?>>> fieldTypes = new ConcurrentHashMap<>();
-	private final int hashCode;
+	 ResolvableType resolvableType;
+	private Map<String, Optional<TypeInformation<?>>> fields = new ConcurrentHashMap<>();
 
-	private final Lazy<Class<S>> resolvedType;
 	private final Lazy<TypeInformation<?>> componentType;
 	private final Lazy<TypeInformation<?>> valueType;
 
-	/**
-	 * Creates a new {@link TypeDiscoverer} for the given type, type variable map and parent.
-	 *
-	 * @param type must not be {@literal null}.
-	 * @param typeVariableMap must not be {@literal null}.
-	 */
-	protected TypeDiscoverer(Type type, Map<TypeVariable<?>, Type> typeVariableMap) {
+	public TypeDiscoverer(Class<?> type) {
+		this(ResolvableType.forClass(type));
+	}
+	public TypeDiscoverer(ResolvableType type) {
 
 		Assert.notNull(type, "Type must not be null!");
-		Assert.notNull(typeVariableMap, "TypeVariableMap must not be null!");
-
-		this.type = type;
-		this.resolvedType = Lazy.of(() -> resolveType(type));
+		this.resolvableType = type;
 		this.componentType = Lazy.of(this::doGetComponentType);
 		this.valueType = Lazy.of(this::doGetMapValueType);
-		this.typeVariableMap = typeVariableMap;
-		this.hashCode = 17 + 31 * type.hashCode() + 31 * typeVariableMap.hashCode();
 	}
 
-	/**
-	 * Returns the type variable map.
-	 *
-	 * @return
-	 */
-	protected Map<TypeVariable<?>, Type> getTypeVariableMap() {
-		return typeVariableMap;
-	}
-
-	/**
-	 * Creates {@link TypeInformation} for the given {@link Type}.
-	 *
-	 * @param fieldType must not be {@literal null}.
-	 * @return
-	 */
-	@SuppressWarnings({ "rawtypes", "unchecked" })
-	protected TypeInformation<?> createInfo(Type fieldType) {
-
-		Assert.notNull(fieldType, "Field type must not be null!");
-
-		if (fieldType.equals(this.type)) {
-			return this;
-		}
-
-		if (fieldType instanceof Class) {
-			return ClassTypeInformation.from((Class<?>) fieldType);
-		}
-
-		if (fieldType instanceof ParameterizedType parameterizedType) {
-
-			return new ParameterizedTypeInformation(parameterizedType, this);
-		}
-
-		if (fieldType instanceof TypeVariable<?> variable) {
-
-			return new TypeVariableTypeInformation(variable, this);
-		}
-
-		if (fieldType instanceof GenericArrayType) {
-			return new GenericArrayTypeInformation((GenericArrayType) fieldType, this);
-		}
-
-		if (fieldType instanceof WildcardType wildcardType) {
-
-			var bounds = wildcardType.getLowerBounds();
-
-			if (bounds.length > 0) {
-				return createInfo(bounds[0]);
-			}
-
-			bounds = wildcardType.getUpperBounds();
-
-			if (bounds.length > 0) {
-				return createInfo(bounds[0]);
-			}
-		}
-
-		throw new IllegalArgumentException();
-	}
-
-	/**
-	 * Resolves the given type into a plain {@link Class}.
-	 *
-	 * @param type
-	 * @return
-	 */
-	@SuppressWarnings({ "unchecked", "rawtypes" })
-	protected Class<S> resolveType(Type type) {
-
-		Map<TypeVariable, Type> map = new HashMap<>();
-		map.putAll(getTypeVariableMap());
-
-		return (Class<S>) GenericTypeResolver.resolveType(type, map);
-	}
-
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.util.TypeInformation#getParameterTypes(java.lang.reflect.Constructor)
-	 */
+	@Override
 	public List<TypeInformation<?>> getParameterTypes(Constructor<?> constructor) {
 
-		Assert.notNull(constructor, "Constructor must not be null!");
-
-		List<TypeInformation<?>> parameterTypes = new ArrayList<>(constructor.getParameterCount());
-		for (var parameter : constructor.getParameters()) {
-			parameterTypes.add(createInfo(parameter.getParameterizedType()));
+		List<TypeInformation<?>> target = new ArrayList<>();
+		for(int i=0;i<constructor.getParameterCount();i++) {
+			target.add(new TypeDiscoverer<>(ResolvableType.forConstructorParameter(constructor, i)));
 		}
-		return parameterTypes;
+		return target;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.util.TypeInformation#getProperty(java.lang.String)
-	 */
 	@Nullable
-	public TypeInformation<?> getProperty(String fieldname) {
+	@Override
+	public TypeInformation<?> getProperty(String name) {
 
-		var separatorIndex = fieldname.indexOf('.');
+		var separatorIndex = name.indexOf('.');
 
 		if (separatorIndex == -1) {
-			return fieldTypes.computeIfAbsent(fieldname, this::getPropertyInformation).orElse(null);
+			return fields.computeIfAbsent(name, this::getPropertyInformation).orElse(null);
 		}
 
-		var head = fieldname.substring(0, separatorIndex);
+		var head = name.substring(0, separatorIndex);
 		var info = getProperty(head);
 
 		if (info == null) {
 			return null;
 		}
 
-		return info.getProperty(fieldname.substring(separatorIndex + 1));
+		return info.getProperty(name.substring(separatorIndex + 1));
 	}
 
-	/**
-	 * Returns the {@link TypeInformation} for the given atomic field. Will inspect fields first and return the type of a
-	 * field if available. Otherwise it will fall back to a {@link PropertyDescriptor}.
-	 *
-	 * @see #getGenericType(PropertyDescriptor)
-	 * @param fieldname
-	 * @return
-	 */
-	@SuppressWarnings("null")
 	private Optional<TypeInformation<?>> getPropertyInformation(String fieldname) {
 
-		Class<?> rawType = getType();
+		Class<?> rawType = resolvableType.toClass();
 		var field = ReflectionUtils.findField(rawType, fieldname);
 
 		if (field != null) {
-			return Optional.of(createInfo(field.getGenericType()));
+			return Optional.of(new TypeDiscoverer(ResolvableType.forField(field, resolvableType)));
 		}
 
-		return findPropertyDescriptor(rawType, fieldname).map(it -> createInfo(getGenericType(it)));
+		return findPropertyDescriptor(rawType, fieldname).map(it -> {
+
+			if(it.getReadMethod() != null) {
+				return new TypeDiscoverer(ResolvableType.forMethodReturnType(it.getReadMethod(), rawType));
+//				return ClassTypeInformation.fromReturnTypeOf(it.getReadMethod());
+			}
+			if(it.getWriteMethod() != null) {
+				return new TypeDiscoverer(ResolvableType.forMethodParameter(it.getWriteMethod(), 0, rawType));
+			}
+
+			return new TypeDiscoverer(ResolvableType.forType(it.getPropertyType(), resolvableType));
+		});
 	}
 
-	/**
-	 * Finds the {@link PropertyDescriptor} for the property with the given name on the given type.
-	 *
-	 * @param type must not be {@literal null}.
-	 * @param fieldname must not be {@literal null} or empty.
-	 * @return
-	 */
-	private static Optional<PropertyDescriptor> findPropertyDescriptor(Class<?> type, String fieldname) {
+	private Optional<PropertyDescriptor> findPropertyDescriptor(Class<?> type, String fieldname) {
 
 		var descriptor = BeanUtils.getPropertyDescriptor(type, fieldname);
 
@@ -255,56 +180,169 @@ class TypeDiscoverer<S> implements TypeInformation<S> {
 				.findFirst();
 	}
 
-	/**
-	 * Returns the generic type for the given {@link PropertyDescriptor}. Will inspect its read method followed by the
-	 * first parameter of the write method.
-	 *
-	 * @param descriptor must not be {@literal null}
-	 * @return
-	 */
+	@Override
+	public boolean isCollectionLike() {
+
+		Class<?> rawType = getType();
+
+		return rawType.isArray() //
+				|| Iterable.class.equals(rawType) //
+				|| Collection.class.isAssignableFrom(rawType) //
+				|| Streamable.class.isAssignableFrom(rawType);
+	}
+
 	@Nullable
-	private static Type getGenericType(PropertyDescriptor descriptor) {
+	@Override
+	public TypeInformation<?> getComponentType() {
+		return componentType.orElse(null);
+	}
 
-		var method = descriptor.getReadMethod();
+	@Nullable
+	protected TypeInformation<?> doGetComponentType() {
 
-		if (method != null) {
-			return method.getGenericReturnType();
+		var rawType = getType();
+
+		if (rawType.isArray()) {
+			return new TypeDiscoverer<>(resolvableType.getComponentType());
 		}
 
-		method = descriptor.getWriteMethod();
+		if (isMap()) {
+			if(ClassUtils.isAssignable(Map.class, rawType)) {
+				ResolvableType mapValueType = resolvableType.asMap().getGeneric(0);
+				if (ResolvableType.NONE.equals(mapValueType)) {
+					return null;
+				}
 
-		if (method == null) {
+				return mapValueType != null ? new TypeDiscoverer(mapValueType) : new ClassTypeInformation<>(Object.class);
+			}
+			if (resolvableType.hasGenerics()) {
+				ResolvableType mapValueType = resolvableType.getGeneric(0);
+				return mapValueType != null ? new TypeDiscoverer(mapValueType) : new ClassTypeInformation<>(Object.class);
+			}
+			return Arrays.stream(resolvableType.getInterfaces()).filter(ResolvableType::hasGenerics)
+					.findFirst()
+					.map(it -> it.getGeneric(0))
+					.map(TypeDiscoverer::new)
+					.orElse(null);
+		}
+
+		if (Iterable.class.isAssignableFrom(rawType)) {
+
+			ResolvableType iterableType = resolvableType.as(Iterable.class);
+			ResolvableType mapValueType = iterableType.getGeneric(0);
+			if(ResolvableType.NONE.equals(mapValueType)) {
+				return null;
+			}
+
+			if (resolvableType.hasGenerics()) {
+				mapValueType = resolvableType.getGeneric(0);
+				return mapValueType != null ? new TypeDiscoverer(mapValueType) : new ClassTypeInformation<>(Object.class);
+			}
+
+			return mapValueType.resolve() != null ? new TypeDiscoverer<>(mapValueType) :null;
+
+//			return Arrays.stream(resolvableType.getInterfaces()).filter(ResolvableType::hasGenerics)
+//					.findFirst()
+//					.map(it -> it.getGeneric(0))
+//					.filter(it -> !ResolvableType.NONE.equals(it))
+//					.map(NewTypeDiscoverer::new)
+//					.orElse(null);
+
+//			if(type.getComponentType().equals(ResolvableType.NONE)) {
+//				if(!type.hasGenerics()) {
+//					return null;
+//				}
+//			}
+//			return mapValueType != null ? new NewTypeDiscoverer(mapValueType) : new ClassTypeInformation<>(Object.class);
+		}
+
+		if (isNullableWrapper()) {
+			ResolvableType mapValueType = resolvableType.getGeneric(0);
+			if(ResolvableType.NONE.equals(mapValueType) ) {
+				return null;
+			}
+			return mapValueType != null ? new TypeDiscoverer(mapValueType) : new ClassTypeInformation<>(Object.class);
+		}
+
+		if (resolvableType.hasGenerics()) {
+			ResolvableType mapValueType = resolvableType.getGeneric(0);
+			return mapValueType != null ? new TypeDiscoverer(mapValueType) : new ClassTypeInformation<>(Object.class);
+		}
+
+		return null;
+	}
+
+	private boolean isNullableWrapper() {
+		return NullableWrapperConverters.supports(getType());
+	}
+
+	@Override
+	public boolean isMap() {
+
+		var type = getType();
+
+		for (var mapType : MAP_TYPES) {
+			if (mapType.isAssignableFrom(type)) {
+				return true;
+			}
+		}
+
+		return false;
+	}
+
+	@Nullable
+	@Override
+	public TypeInformation<?> getMapValueType() {
+		return valueType.orElse(null);
+	}
+
+	@Nullable
+	protected TypeInformation<?> doGetMapValueType() {
+
+		if(isMap()) {
+			if(ClassUtils.isAssignable(Map.class, getType())) {
+				ResolvableType mapValueType = resolvableType.asMap().getGeneric(1);
+				if (ResolvableType.NONE.equals(mapValueType)) {
+					return null;
+				}
+
+				return mapValueType != null ? new TypeDiscoverer(mapValueType) : new ClassTypeInformation<>(Object.class);
+			}
+			if (resolvableType.hasGenerics()) {
+				ResolvableType mapValueType = resolvableType.getGeneric(1);
+				return mapValueType != null ? new TypeDiscoverer(mapValueType) : new ClassTypeInformation<>(Object.class);
+			}
+			return Arrays.stream(resolvableType.getInterfaces()).filter(ResolvableType::hasGenerics)
+					.findFirst()
+					.map(it -> it.getGeneric(1))
+					.map(TypeDiscoverer::new)
+					.orElse(null);
+		}
+
+		if(!resolvableType.hasGenerics()) {
 			return null;
 		}
+		ResolvableType x = Arrays.stream(resolvableType.getGenerics()).skip(1).findFirst().orElse(null);
+		if(x == null || ResolvableType.NONE.equals(x)) {
+			return  null;
+		}
 
-		var parameterTypes = method.getGenericParameterTypes();
-		return parameterTypes.length == 0 ? null : parameterTypes[0];
+		return new TypeDiscoverer<>(x);
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.util.TypeInformation#getType()
-	 */
+	@Override
 	public Class<S> getType() {
-		return resolvedType.get();
+		return (Class<S>) resolvableType.toClass();
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.util.TypeInformation#getRawTypeInformation()
-	 */
 	@Override
 	public ClassTypeInformation<?> getRawTypeInformation() {
-		return ClassTypeInformation.from(getType()).getRawTypeInformation();
+		return new ClassTypeInformation<>(this.resolvableType.getRawClass());
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.util.TypeInformation#getActualType()
-	 */
 	@Nullable
+	@Override
 	public TypeInformation<?> getActualType() {
-
 		if (isMap()) {
 			return getMapValueType();
 		}
@@ -322,115 +360,22 @@ class TypeDiscoverer<S> implements TypeInformation<S> {
 		return this;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.util.TypeInformation#isMap()
-	 */
-	public boolean isMap() {
-
-		var type = getType();
-
-		for (var mapType : MAP_TYPES) {
-			if (mapType.isAssignableFrom(type)) {
-				return true;
-			}
-		}
-
-		return false;
-	}
-
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.util.TypeInformation#getMapValueType()
-	 */
-	@Nullable
-	public TypeInformation<?> getMapValueType() {
-		return valueType.orElse(null);
-	}
-
-	@Nullable
-	protected TypeInformation<?> doGetMapValueType() {
-		return isMap() ? getTypeArgument(getBaseType(MAP_TYPES), 1)
-				: getTypeArguments().stream().skip(1).findFirst().orElse(null);
-	}
-
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.util.TypeInformation#isCollectionLike()
-	 */
-	public boolean isCollectionLike() {
-
-		Class<?> rawType = getType();
-
-		return rawType.isArray() //
-				|| Iterable.class.equals(rawType) //
-				|| Collection.class.isAssignableFrom(rawType) //
-				|| Streamable.class.isAssignableFrom(rawType);
-	}
-
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.util.TypeInformation#getComponentType()
-	 */
-	@Nullable
-	public final TypeInformation<?> getComponentType() {
-		return componentType.orElse(null);
-	}
-
-	@Nullable
-	protected TypeInformation<?> doGetComponentType() {
-
-		var rawType = getType();
-
-		if (rawType.isArray()) {
-			return createInfo(rawType.getComponentType());
-		}
-
-		if (isMap()) {
-			return getTypeArgument(getBaseType(MAP_TYPES), 0);
-		}
-
-		if (Iterable.class.isAssignableFrom(rawType)) {
-			return getTypeArgument(Iterable.class, 0);
-		}
-
-		if(isNullableWrapper()) {
-			return getTypeArgument(rawType, 0);
-		}
-
-		var arguments = getTypeArguments();
-
-		return arguments.size() > 0 ? arguments.get(0) : null;
-	}
-
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.util.TypeInformation#getReturnType(java.lang.reflect.Method)
-	 */
+	@Override
 	public TypeInformation<?> getReturnType(Method method) {
-
-		Assert.notNull(method, "Method must not be null!");
-		return createInfo(method.getGenericReturnType());
+		return new TypeDiscoverer(ResolvableType.forMethodReturnType(method, getType()));
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.util.TypeInformation#getMethodParameterTypes(java.lang.reflect.Method)
-	 */
+	@Override
 	public List<TypeInformation<?>> getParameterTypes(Method method) {
 
-		Assert.notNull(method, "Method most not be null!");
-
-		return Streamable.of(method.getGenericParameterTypes()).stream()//
-				.map(this::createInfo)//
+		return Streamable.of(method.getParameters()).stream().map(MethodParameter::forParameter)
+				.map(it -> ResolvableType.forMethodParameter(it, resolvableType)).map(TypeDiscoverer::new)
 				.collect(Collectors.toList());
+
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.util.TypeInformation#getSuperTypeInformation(java.lang.Class)
-	 */
 	@Nullable
+	@Override
 	public TypeInformation<?> getSuperTypeInformation(Class<?> superType) {
 
 		Class<?> rawType = getType();
@@ -439,229 +384,133 @@ class TypeDiscoverer<S> implements TypeInformation<S> {
 			return null;
 		}
 
-		if (getType().equals(superType)) {
+		if (rawType.equals(superType)) {
 			return this;
 		}
 
-		List<Type> candidates = new ArrayList<>();
-		var genericSuperclass = rawType.getGenericSuperclass();
+		List<ResolvableType> candidates = new ArrayList<>();
 
-		if (genericSuperclass != null) {
+		ResolvableType genericSuperclass = resolvableType.getSuperType();
+		if (genericSuperclass != null && !genericSuperclass.equals(ResolvableType.NONE)) {
 			candidates.add(genericSuperclass);
 		}
 
-		candidates.addAll(Arrays.asList(rawType.getGenericInterfaces()));
+		// todo try raw type interfaces //
+
+		candidates.addAll(Arrays.asList(resolvableType.getInterfaces()));
 
 		for (var candidate : candidates) {
+			if (ObjectUtils.nullSafeEquals(superType, candidate.toClass())) {
 
-			var candidateInfo = createInfo(candidate);
+				if(resolvableType.getType() instanceof Class) {
 
-			if (superType.equals(candidateInfo.getType())) {
-				return candidateInfo;
+					if(ObjectUtils.isEmpty(((Class)resolvableType.getType()).getTypeParameters())) {
+						Class<?>[] classes = candidate.resolveGenerics(null);
+
+						if (!Arrays.stream(classes).filter(it -> it != null).findAny().isPresent()) {
+							return new TypeDiscoverer<>(ResolvableType.forRawClass(superType));
+						}
+					}
+//					return new NewTypeDiscoverer<>(ResolvableType.forClassWithGenerics(candidate.toClass(), classes));
+				}
+//				return new NewTypeDiscoverer(candidate);
+//				if(ObjectUtils.isEmpty(superType.getTypeParameters())) {
+//					new NewTypeDiscoverer(ResolvableType.forRawClass(superType));
+//				}
+				return new TypeDiscoverer(ResolvableType.forClass(superType, getType()));
 			} else {
-
-				var nestedSuperType = candidateInfo.getSuperTypeInformation(superType);
-
-				if (nestedSuperType != null) {
-					return nestedSuperType;
+				var sup = candidate.getSuperType();
+				if (sup != null && !ResolvableType.NONE.equals(sup)) {
+					if(sup.equals(resolvableType)) {
+						return this;
+					}
+					return new TypeDiscoverer(sup);
 				}
 			}
 		}
 
-		return null;
+		return new TypeDiscoverer(resolvableType.as(superType));
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.util.TypeInformation#getTypeParameters()
-	 */
-	public List<TypeInformation<?>> getTypeArguments() {
-		return Collections.emptyList();
-	}
-
-	/* (non-Javadoc)
-	 * @see org.springframework.data.util.TypeInformation#isAssignableFrom(org.springframework.data.util.TypeInformation)
-	 */
+	@Override
 	public boolean isAssignableFrom(TypeInformation<?> target) {
 
 		var superTypeInformation = target.getSuperTypeInformation(getType());
 
-		return superTypeInformation == null ? false : superTypeInformation.equals(this);
-	}
-
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.util.TypeInformation#specialize(org.springframework.data.util.ClassTypeInformation)
-	 */
-	@Override
-	@SuppressWarnings("unchecked")
-	public TypeInformation<? extends S> specialize(ClassTypeInformation<?> type) {
-
-		Assert.notNull(type, "Type must not be null!");
-		Assert.isTrue(getType().isAssignableFrom(type.getType()),
-				() -> String.format("%s must be assignable from %s", getType(), type.getType()));
-
-		var typeArguments = getTypeArguments();
-
-		return (TypeInformation<? extends S>) (typeArguments.isEmpty() //
-				? type //
-				: null); //type.createInfo(new SyntheticParamterizedType(type, getTypeArguments())));
-	}
-
-	@Nullable
-	private TypeInformation<?> getTypeArgument(Class<?> bound, int index) {
-
-		var arguments = GenericTypeResolver.resolveTypeArguments(getType(), bound);
-
-		if (arguments != null) {
-			return createInfo(arguments[index]);
+		if(superTypeInformation == null) {
+			return false;
+		}
+		if(superTypeInformation.equals(this)) {
+			return true;
 		}
 
-		return getSuperTypeInformation(bound) instanceof ParameterizedTypeInformation //
-				? ClassTypeInformation.OBJECT //
-				: null;
+		if(resolvableType.isAssignableFrom(target.getType())) {
+			return true;
+		}
+
+		return false;
 	}
 
-	private Class<?> getBaseType(Class<?>[] candidates) {
+	@Override
+	public List<TypeInformation<?>> getTypeArguments() {
 
-		var type = getType();
+		if (!resolvableType.hasGenerics()) {
+			return Collections.emptyList();
+		}
 
-		for (var candidate : candidates) {
-			if (candidate.isAssignableFrom(type)) {
-				return candidate;
+		return Arrays.stream(resolvableType.getGenerics()).map(it -> {
+			if(it == null || ResolvableType.NONE.equals(it)) {
+				return null;
 			}
-		}
+			return new TypeDiscoverer<>(it);
 
-		throw new IllegalArgumentException(String.format("Type %s not contained in candidates %s!", type, candidates));
+		}).collect(Collectors.toList());
 	}
 
-	private boolean isNullableWrapper() {
-		return NullableWrapperConverters.supports(getType());
-	}
-
-	/*
-	 * (non-Javadoc)
-	 * @see java.lang.Object#equals(java.lang.Object)
-	 */
 	@Override
-	public boolean equals(@Nullable Object obj) {
+	public TypeInformation<? extends S> specialize(ClassTypeInformation<?> type) {
+//		if(isAssignableFrom(type)) {
+//			return new ClassTypeInformation(type.getType());
+//		}
+//		return new NewTypeDiscoverer(type.resolvableType.as(getType()));
+//		if(type.resolvableType.isAssignableFrom(type.resolvableType)) {
+//			return (TypeInformation<? extends S>) type;
+//		}
 
-		if (obj == this) {
-			return true;
+		if(this.resolvableType.getGenerics().length == type.resolvableType.getGenerics().length) {
+			return new TypeDiscoverer<>(ResolvableType.forClassWithGenerics(type.getType(), this.resolvableType.getGenerics()));
 		}
 
-		if (obj == null) {
-			return false;
-		}
-
-		if (!this.getClass().equals(obj.getClass())) {
-			return false;
-		}
-
-		var that = (TypeDiscoverer<?>) obj;
-
-		if (!this.type.equals(that.type)) {
-			return false;
-		}
-
-		if (this.typeVariableMap.isEmpty() && that.typeVariableMap.isEmpty()) {
-			return true;
-		}
-
-		return this.typeVariableMap.equals(that.typeVariableMap);
+		return new ClassTypeInformation(type.getType());
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see java.lang.Object#hashCode()
-	 */
+	@Override
+	public boolean equals(Object o) {
+		if (this == o) return true;
+		if (o == null || !ClassUtils.isAssignable(getClass(), o.getClass())) return false;
+
+		TypeDiscoverer<?> that = (TypeDiscoverer<?>) o;
+
+		if(!ObjectUtils.nullSafeEquals(resolvableType.getType(), that.resolvableType.getType())) {
+			return false;
+		}
+
+		List<? extends Class<?>> collect1 = Arrays.stream(resolvableType.getGenerics()).map(ResolvableType::toClass).collect(Collectors.toList());
+		List<? extends Class<?>> collect2 = Arrays.stream(that.resolvableType.getGenerics()).map(ResolvableType::toClass).collect(Collectors.toList());
+
+		if(!ObjectUtils.nullSafeEquals(collect1, collect2)) {
+			return false;
+		}
+		return true;
+	}
+
 	@Override
 	public int hashCode() {
-		return hashCode;
+		return ObjectUtils.nullSafeHashCode(resolvableType.toClass());
 	}
 
-	/**
-	 * A synthetic {@link ParameterizedType}.
-	 *
-	 * @author Oliver Gierke
-	 * @since 1.11
-	 */
-	private static class SyntheticParamterizedType implements ParameterizedType {
-
-		private final ClassTypeInformation<?> typeInformation;
-		private final List<TypeInformation<?>> typeParameters;
-
-		public SyntheticParamterizedType(ClassTypeInformation<?> typeInformation, List<TypeInformation<?>> typeParameters) {
-			this.typeInformation = typeInformation;
-			this.typeParameters = typeParameters;
-		}
-
-		/*
-		 * (non-Javadoc)
-		 * @see java.lang.reflect.ParameterizedType#getRawType()
-		 */
-		@Override
-		public Type getRawType() {
-			return typeInformation.getType();
-		}
-
-		/*
-		 * (non-Javadoc)
-		 * @see java.lang.reflect.ParameterizedType#getOwnerType()
-		 */
-		@Override
-		@Nullable
-		public Type getOwnerType() {
-			return null;
-		}
-
-		/*
-		 * (non-Javadoc)
-		 * @see java.lang.reflect.ParameterizedType#getActualTypeArguments()
-		 */
-		@Override
-		public Type[] getActualTypeArguments() {
-
-			var result = new Type[typeParameters.size()];
-
-			for (var i = 0; i < typeParameters.size(); i++) {
-				result[i] = typeParameters.get(i).getType();
-			}
-
-			return result;
-		}
-
-		/*
-		 * (non-Javadoc)
-		 * @see org.springframework.data.util.ParentTypeAwareTypeInformation#equals(java.lang.Object)
-		 */
-		@Override
-		public boolean equals(@Nullable Object o) {
-
-			if (this == o) {
-				return true;
-			}
-
-			if (!(o instanceof SyntheticParamterizedType that)) {
-				return false;
-			}
-
-			if (!ObjectUtils.nullSafeEquals(typeInformation, that.typeInformation)) {
-				return false;
-			}
-
-			return ObjectUtils.nullSafeEquals(typeParameters, that.typeParameters);
-		}
-
-		/*
-		 * (non-Javadoc)
-		 * @see java.lang.Object#hashCode()
-		 */
-		@Override
-		public int hashCode() {
-			var result = ObjectUtils.nullSafeHashCode(typeInformation);
-			result = 31 * result + ObjectUtils.nullSafeHashCode(typeParameters);
-			return result;
-		}
+	@Override
+	public String toString() {
+		return getType().getName();
 	}
 }
