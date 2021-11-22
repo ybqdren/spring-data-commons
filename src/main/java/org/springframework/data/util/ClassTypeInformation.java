@@ -75,9 +75,14 @@ public class ClassTypeInformation<S> extends NewTypeDiscoverer<S> {
 			ReferenceType.WEAK);
 
 	public static TypeInformation<?> fromReturnTypeOf(Method method) {
-		// todo open issue in FW for ResolvableType.forMethod(method)
-		return new NewTypeDiscoverer(ResolvableType.forType(method.getGenericReturnType(), ResolvableType.forClass(method.getDeclaringClass())));
+		return new NewTypeDiscoverer<>(ResolvableType.forMethodReturnType(method));
 	}
+//
+//	public static TypeInformation<?> fromReturnTypeOf(Method method, Class<?> actualType) {
+//		// todo open issue in FW for ResolvableType.forMethod(method)
+//		//return new NewTypeDiscoverer(ResolvableType.forType(method.getGenericReturnType(), ResolvableType.forClass(method.getDeclaringClass())));
+//		return new NewTypeDiscoverer<>(ResolvableType.forMethodReturnType(method, actualType));
+//	}
 
 	Class<?> type;
 
@@ -88,7 +93,6 @@ public class ClassTypeInformation<S> extends NewTypeDiscoverer<S> {
 	public static <S> ClassTypeInformation<S> from(Class<S> type) {
 
 		Assert.notNull(type, "Type must not be null!");
-		System.out.println("type: " + type);
 
 		return (ClassTypeInformation<S>) cache.computeIfAbsent(type, ClassTypeInformation::new);
 	}

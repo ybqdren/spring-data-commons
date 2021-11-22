@@ -50,6 +50,8 @@ package org.springframework.data.util;
 import java.beans.PropertyDescriptor;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
+import java.lang.reflect.ParameterizedType;
+import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -145,6 +147,15 @@ public class NewTypeDiscoverer<S> implements TypeInformation<S> {
 		}
 
 		return findPropertyDescriptor(rawType, fieldname).map(it -> {
+
+			if(it.getReadMethod() != null) {
+				return new NewTypeDiscoverer(ResolvableType.forMethodReturnType(it.getReadMethod(), rawType));
+//				return ClassTypeInformation.fromReturnTypeOf(it.getReadMethod());
+			}
+			if(it.getWriteMethod() != null) {
+				return new NewTypeDiscoverer(ResolvableType.forMethodParameter(it.getWriteMethod(), 0, rawType));
+			}
+
 			return new NewTypeDiscoverer(ResolvableType.forType(it.getPropertyType(), resolvableType));
 		});
 	}
@@ -377,15 +388,33 @@ public class NewTypeDiscoverer<S> implements TypeInformation<S> {
 		List<ResolvableType> candidates = new ArrayList<>();
 
 		ResolvableType genericSuperclass = resolvableType.getSuperType();
-		if (genericSuperclass != null) {
+		if (genericSuperclass != null && !genericSuperclass.equals(ResolvableType.NONE)) {
 			candidates.add(genericSuperclass);
 		}
+
+		// todo try raw type interfaces //
 
 		candidates.addAll(Arrays.asList(resolvableType.getInterfaces()));
 
 		for (var candidate : candidates) {
 			if (ObjectUtils.nullSafeEquals(superType, candidate.toClass())) {
-				return new NewTypeDiscoverer(candidate);
+
+				if(resolvableType.getType() instanceof Class) {
+
+					if(ObjectUtils.isEmpty(((Class)resolvableType.getType()).getTypeParameters())) {
+						Class<?>[] classes = candidate.resolveGenerics(null);
+
+						if (!Arrays.stream(classes).filter(it -> it != null).findAny().isPresent()) {
+							return new NewTypeDiscoverer<>(ResolvableType.forRawClass(superType));
+						}
+					}
+//					return new NewTypeDiscoverer<>(ResolvableType.forClassWithGenerics(candidate.toClass(), classes));
+				}
+//				return new NewTypeDiscoverer(candidate);
+//				if(ObjectUtils.isEmpty(superType.getTypeParameters())) {
+//					new NewTypeDiscoverer(ResolvableType.forRawClass(superType));
+//				}
+				return new NewTypeDiscoverer(ResolvableType.forClass(superType, getType()));
 			} else {
 				var sup = candidate.getSuperType();
 				if (sup != null && !ResolvableType.NONE.equals(sup)) {
@@ -425,7 +454,14 @@ public class NewTypeDiscoverer<S> implements TypeInformation<S> {
 		if (!resolvableType.hasGenerics()) {
 			return Collections.emptyList();
 		}
-		return Arrays.stream(resolvableType.getGenerics()).map(NewTypeDiscoverer::new).collect(Collectors.toList());
+
+		return Arrays.stream(resolvableType.getGenerics()).map(it -> {
+			if(it == null || ResolvableType.NONE.equals(it)) {
+				return null;
+			}
+			return new NewTypeDiscoverer<>(it);
+
+		}).collect(Collectors.toList());
 	}
 
 	@Override
