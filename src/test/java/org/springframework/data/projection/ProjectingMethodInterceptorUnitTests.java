@@ -191,7 +191,6 @@ class ProjectingMethodInterceptorUnitTests {
 	}
 
 	@Test // DATACMNS-1598
-	// todo: component type must find the enum
 	void returnsEnumSet() throws Throwable {
 
 		MethodInterceptor methodInterceptor = new ProjectingMethodInterceptor(new ProxyProjectionFactory(), interceptor,

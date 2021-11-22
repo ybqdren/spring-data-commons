@@ -21,7 +21,6 @@ import java.io.Serializable;
 import java.util.Collection;
 import java.util.Optional;
 
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import org.springframework.data.domain.Page;
@@ -55,7 +54,6 @@ class DefaultRepositoryMetadataUnitTests {
 	}
 
 	@Test // DATACMNS-406
-//	@Disabled("F*****!")
 	void rejectsUnparameterizedRepositoryInterface() {
 		assertThatIllegalArgumentException().isThrownBy(() -> new DefaultRepositoryMetadata(RepoWithoutArgs.class));
 	}

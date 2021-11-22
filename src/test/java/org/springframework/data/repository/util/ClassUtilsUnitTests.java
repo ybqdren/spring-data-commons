@@ -52,8 +52,6 @@ class ClassUtilsUnitTests {
 
 	@Test // DATACMNS-769
 	void unwrapsWrapperTypesBeforeAssignmentCheck() throws Exception {
-
-		// Future<Page<User>> findAsync(Pageable pageable);
 		assertReturnTypeAssignable(UserRepository.class.getMethod("findAsync", Pageable.class), Page.class);
 	}
 

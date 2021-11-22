@@ -68,12 +68,6 @@ public class AbstractPersistentPropertyUnitTests {
 
 	@Test // DATACMNS-68
 	void discoversComponentTypeCorrectly() {
-
-		// TestClassSet testClassSet;
-		// class TestClassSet extends TreeSet<Object> {}
-
-		// type -> collection -> generics
-
 		assertThat(getProperty(TestClassComplex.class, "testClassSet").getComponentType()).isEqualTo(Object.class);
 	}
 
