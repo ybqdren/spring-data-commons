@@ -375,12 +375,6 @@ public class AbstractPersistentPropertyUnitTests {
 			return false;
 		}
 
-		@Nullable
-		@Override
-		public PropertyValueConverter<?, ?> getValueConverter() {
-			return null;
-		}
-
 		@Override
 		public <A extends Annotation> A findPropertyOrOwnerAnnotation(Class<A> annotationType) {
 			return null;
