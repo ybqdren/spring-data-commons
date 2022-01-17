@@ -39,6 +39,22 @@ import org.springframework.lang.Nullable;
 import org.springframework.util.ConcurrentReferenceHashMap;
 
 /**
+ * <p>
+ *     当一个 {@link org.springframework.data.repository.Repository} 上的查询方法（譬如 findByEmailAndLastname 方法）
+ *     被调用时，
+ *     Advice 拦截器会在方法真正地实现调用前先执行 MetdhosInterceptor 的 invoke 方法，
+ *     这样我们就有机会在真正方法实现执行前执行其他代码了
+ * </p>
+ *
+ * <p>
+ *     对于 QueryExecutorMethodInterceptor 来说，最重要的代码并不在 invoke 方法中，
+ *     而是在它的构造器：
+ *     		public QueryExecutorMethodInterceptor(RepositoryInformation repositoryInformation,
+ * 			ProjectionFactory projectionFactory, Optional<QueryLookupStrategy> queryLookupStrategy, NamedQueries namedQueries,
+ * 			List<QueryCreationListener<?>> queryPostProcessors,
+ * 			List<RepositoryMethodInvocationListener> methodInvocationListeners)
+ * </p>
+ *
  * This {@link MethodInterceptor} intercepts calls to methods of the custom implementation and delegates the to it if
  * configured. Furthermore it resolves method calls to finders and triggers execution of them. You can rely on having a
  * custom repository implementation instance set if this returns true.
