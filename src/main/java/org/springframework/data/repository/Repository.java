@@ -18,6 +18,8 @@ package org.springframework.data.repository;
 import org.springframework.stereotype.Indexed;
 
 /**
+ * Reoisutiry 位于 Spring Data Common 中，是 Spring Data 中做数据库操作的最底层的抽象接口、最顶级的腹
+ *
  * Central repository marker interface. Captures the domain type to manage as well as the domain type's id type. General
  * purpose is to hold type information as well as being able to discover interfaces that extend this one during
  * classpath scanning for easy Spring bean creation.
