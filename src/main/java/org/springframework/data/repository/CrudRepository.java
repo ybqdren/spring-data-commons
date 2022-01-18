@@ -18,6 +18,11 @@ package org.springframework.data.repository;
 import java.util.Optional;
 
 /**
+ * <p>
+ *     CrudRepository 接口提供了公共通用的 CRUD 方法。
+ *
+ * </p>
+ *
  * Interface for generic CRUD operations on a repository for a specific type.
  *
  * @author Oliver Gierke
@@ -28,6 +33,8 @@ import java.util.Optional;
 public interface CrudRepository<T, ID> extends Repository<T, ID> {
 
 	/**
+	 * 保存实体方法
+	 *
 	 * Saves a given entity. Use the returned instance for further operations as the save operation might have changed the
 	 * entity instance completely.
 	 *
@@ -38,6 +45,8 @@ public interface CrudRepository<T, ID> extends Repository<T, ID> {
 	<S extends T> S save(S entity);
 
 	/**
+	 * 批量保存。保存的原理和步骤和 save 方法相同，不过是使用了 for 循环调用上面的 save 方法
+	 *
 	 * Saves all given entities.
 	 *
 	 * @param entities must not be {@literal null} nor must it contain {@literal null}.
@@ -49,6 +58,8 @@ public interface CrudRepository<T, ID> extends Repository<T, ID> {
 	<S extends T> Iterable<S> saveAll(Iterable<S> entities);
 
 	/**
+	 * 根据主键查询实体
+	 *
 	 * Retrieves an entity by its id.
 	 *
 	 * @param id must not be {@literal null}.
@@ -58,6 +69,8 @@ public interface CrudRepository<T, ID> extends Repository<T, ID> {
 	Optional<T> findById(ID id);
 
 	/**
+	 * 根据主键判断实体是否存在
+	 *
 	 * Returns whether an entity with the given id exists.
 	 *
 	 * @param id must not be {@literal null}.
@@ -67,6 +80,8 @@ public interface CrudRepository<T, ID> extends Repository<T, ID> {
 	boolean existsById(ID id);
 
 	/**
+	 * 查询实体的所有列表
+	 *
 	 * Returns all instances of the type.
 	 *
 	 * @return all entities
@@ -74,6 +89,8 @@ public interface CrudRepository<T, ID> extends Repository<T, ID> {
 	Iterable<T> findAll();
 
 	/**
+	 * 根据主键查询实体列表
+	 *
 	 * Returns all instances of the type {@code T} with the given IDs.
 	 * <p>
 	 * If some or all ids are not found, no entities are returned for these IDs.
@@ -88,6 +105,8 @@ public interface CrudRepository<T, ID> extends Repository<T, ID> {
 	Iterable<T> findAllById(Iterable<ID> ids);
 
 	/**
+	 * 查询总数
+	 *
 	 * Returns the number of entities available.
 	 *
 	 * @return the number of entities.
@@ -95,6 +114,8 @@ public interface CrudRepository<T, ID> extends Repository<T, ID> {
 	long count();
 
 	/**
+	 * 根据主键进行删除操作
+	 *
 	 * Deletes the entity with the given id.
 	 *
 	 * @param id must not be {@literal null}.
