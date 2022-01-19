@@ -25,6 +25,8 @@ import org.springframework.lang.Nullable;
 import org.springframework.util.StringUtils;
 
 /**
+ * QueryLookupStrategy 是方法策略的定义接口
+ *
  * Strategy interface for which way to lookup {@link RepositoryQuery}s.
  *
  * @author Oliver Gierke

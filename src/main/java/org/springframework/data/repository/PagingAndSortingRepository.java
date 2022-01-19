@@ -20,6 +20,16 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 
 /**
+ * PagingAndSortingRepository 除了集成了 {@link CrudRepository} 所有基本方法外，
+ * 它还增加了 < 分页和排序等对查询结果进行限制 >  的基本的、常用的、通用的一些分页方法
+ *
+ * <p>
+ *     {@link PagingAndSortingRepository} 和 {@link CrudRepository} 都是 Spring Data Common 的标准接口，
+ *     如果我们采用 JPA ，那它对应的实体类就是 Spring-Data-JPA 中的 SimpleJpaRepository。
+ *     如果是其他的 NoSQL 的实现，例如 Mongodb ，那么就是 Spring-Data-Mongodb 的实体类
+ * </p>
+ *
+ *
  * Extension of {@link CrudRepository} to provide additional methods to retrieve entities using the pagination and
  * sorting abstraction.
  *
@@ -32,6 +42,8 @@ import org.springframework.data.domain.Sort;
 public interface PagingAndSortingRepository<T, ID> extends CrudRepository<T, ID> {
 
 	/**
+	 * 根据排序获取所有对象的集合
+	 *
 	 * Returns all entities sorted by the given options.
 	 *
 	 * @param sort
@@ -40,6 +52,10 @@ public interface PagingAndSortingRepository<T, ID> extends CrudRepository<T, ID>
 	Iterable<T> findAll(Sort sort);
 
 	/**
+	 * 根据分页和排序进行查询，并用 Page 对象封装。
+	 *
+	 * {@link Pageable} 对象包含分页和 {@link Sort} 对象
+	 *
 	 * Returns a {@link Page} of entities meeting the paging restriction provided in the {@code Pageable} object.
 	 *
 	 * @param pageable
